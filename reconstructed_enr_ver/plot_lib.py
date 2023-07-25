@@ -1,5 +1,6 @@
 import pulse_wavefrom as pw
 import matplotlib.pyplot as plt
+import matplotlib
 import numpy as np
 
 def plot_pulse_sequence(pulse_sequence, simulation_option):
@@ -97,5 +98,26 @@ def plot_population_evolution(_system, result_list, simulation_option, intereste
     # Adjust layout
     plt.tight_layout()
     # Show the plot
+    plt.show()
+    return 0
+
+def plot_zz_sweep(x_list, y_list, zz_list, x_label, y_label):
+    nrm1 = matplotlib.colors.LogNorm(1e-6, 1e-1)  
+    fig1, ax1 = plt.subplots()
+    p1 = ax1.pcolor(x_list, y_list, zz_list, cmap=matplotlib.cm.viridis_r,norm=nrm1)
+    cb1 = fig1.colorbar(p1, ax=ax1,label='ZZ/GHz', extend='both')
+    ax1.set_xlabel('${}$/GHz'.format(x_label))
+    ax1.set_ylabel('${}$/GHz'.format(y_label))
+
+    plt.show()
+    return 0
+
+def plot_Elevel_dynamics(w_scan_space, energy_level_list, label):
+    for j in range(9):
+        plt.plot(w_scan_space, [v[j] for v in energy_level_list])
+
+    plt.xlabel('${}$/GHz'.format(label))
+    plt.ylabel('Energy level')
+    plt.title("Energy level dynamics")
     plt.show()
     return 0

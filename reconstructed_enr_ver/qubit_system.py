@@ -146,7 +146,6 @@ class qubit_system:
         More features:
             - DRAG pulse regime
             - More pulse shape
-            - Support pulse sequence
             T.B.C.
         """
         q_index = pulse["q_index"]
@@ -207,7 +206,3 @@ class qubit_system:
             data_list.append(data_list_dummy)
             index += 1
         return data_list
-    
-
-def cal_tensor(my_list):
-    return (tensor(*my_list))
