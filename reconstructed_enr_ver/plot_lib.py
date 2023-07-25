@@ -101,7 +101,7 @@ def plot_population_evolution(_system, result_list, simulation_option, intereste
     plt.show()
     return 0
 
-def plot_zz_sweep(x_list, y_list, zz_list, x_label, y_label):
+def plot_zz_sweep(x_list:list, y_list:list, zz_list:list, x_label:str, y_label:str):
     nrm1 = matplotlib.colors.LogNorm(1e-6, 1e-1)  
     fig1, ax1 = plt.subplots()
     p1 = ax1.pcolor(x_list, y_list, zz_list, cmap=matplotlib.cm.viridis_r,norm=nrm1)
@@ -112,8 +112,8 @@ def plot_zz_sweep(x_list, y_list, zz_list, x_label, y_label):
     plt.show()
     return 0
 
-def plot_Elevel_dynamics(w_scan_space, energy_level_list, label):
-    for j in range(9):
+def plot_Elevel_dynamics(w_scan_space, energy_level_list, num_to_plot:int, label:str):
+    for j in range(num_to_plot):
         plt.plot(w_scan_space, [v[j] for v in energy_level_list])
 
     plt.xlabel('${}$/GHz'.format(label))
