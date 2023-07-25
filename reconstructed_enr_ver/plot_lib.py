@@ -1,0 +1,101 @@
+import pulse_wavefrom as pw
+import matplotlib.pyplot as plt
+import numpy as np
+
+def plot_pulse_sequence(pulse_sequence, simulation_option):
+    t_list = np.linspace(0, simulation_option["simulation_time"], 
+    simulation_option["simulation_step"])
+    channel_dic = {}
+    q_index_list = []
+    for pulse in pulse_sequence:
+        pulse_lib = pw.pulse_lib(pulse)
+        drive_pulse = pulse_lib.get_pulse()
+        if pulse["q_index"] not in q_index_list:
+            q_index_list.append(pulse["q_index"])
+        waveform_y = [drive_pulse(t, None) for t in t_list]
+        channel_name = "{}{}".format(pulse["type"], pulse["q_index"])
+        if channel_name in channel_dic:
+            channel_dic[channel_name] = np.array(channel_dic[channel_name]) + np.array(waveform_y)
+        else:
+            channel_dic[channel_name] = waveform_y
+
+    # Define a custom sorting function to sort the channel names as desired
+    def custom_sort(channel_name):
+        channel_type = channel_name[:-1]
+        channel_index = channel_name[-1]
+        if channel_index.isdigit():
+            return int(channel_index), channel_type
+        else:
+            return float('inf'), channel_type
+
+    # Sort the channel names based on the custom sorting function
+    sorted_channels = sorted(channel_dic.keys(), key=custom_sort)
+
+    # Convert the waveform data to NumPy arrays
+    channel_dic = {k: np.array(v) for k, v in channel_dic.items()}
+
+    # Create the figure and axes
+    fig, ax1 = plt.subplots()
+
+    # Set the vertical spacing between channel lines
+    vertical_spacing = 2
+
+    # Iterate over the channels and plot them vertically separated
+    for i, channel_name in enumerate(sorted_channels):
+        waveform = channel_dic[channel_name]
+        vertical_offset = i * vertical_spacing
+        ax1.plot(t_list, waveform + vertical_offset, label=channel_name)
+
+    # Set the y-axis tick labels and limits for channel plot
+    ax1.set_yticks(np.arange(len(channel_dic)) * vertical_spacing)
+    ax1.set_yticklabels(sorted_channels)
+    ax1.set_ylim(-vertical_spacing, len(channel_dic) * vertical_spacing)
+
+    # Add legend and labels for channel plot
+    # ax1.legend(loc="upper right")
+    ax1.set_xlabel("Time/ns")
+    ax1.set_ylabel("Channel")
+
+    # Create a twin axes for the pulse amplitude
+    ax2 = ax1.twinx()
+    ax2.set_ylim(-vertical_spacing, len(channel_dic) * vertical_spacing)
+
+    # Add label for the pulse amplitude axis
+    ax2.set_ylabel("Pulse Amplitude")
+
+    # Show the plot
+    plt.grid()
+    plt.show()
+
+    return 0
+
+
+def plot_population_evolution(_system, result_list, simulation_option, interested_state, interested_state_label, initial_state_label):
+    num_subplots = len(result_list)
+    # Calculate the number of rows and columns for the subplot layout
+    num_rows = int(num_subplots ** 0.5)
+    num_cols = (num_subplots + num_rows - 1) // num_rows
+    # Create subplots
+    fig, axs = plt.subplots(num_rows, num_cols, figsize=(10, 8))
+    # Flatten the axs array if it's 1D (for the case when there's only one subplot)
+    time_list = np.linspace(0,simulation_option["simulation_time"],simulation_option["simulation_step"])
+    if num_subplots in [2,3]:
+        axs = np.array([axs])
+    if num_subplots == 1:
+        axs = np.array([[axs]])
+    for index, result in enumerate(result_list):
+        row_idx = index // num_cols
+        col_idx = index % num_cols
+        label_list = interested_state_label[index]
+        data_list = _system.get_data_list(result, simulation_option, interested_state[index])
+        for jndex in range(len(data_list)):
+            axs[row_idx, col_idx].plot(time_list, data_list[jndex], label = label_list[jndex])
+            axs[row_idx, col_idx].set_xlabel("Time/ns")
+            axs[row_idx, col_idx].set_ylabel("Population")
+            axs[row_idx, col_idx].legend()
+        axs[row_idx, col_idx].set_title("Initial state: {}".format(initial_state_label[index]))
+    # Adjust layout
+    plt.tight_layout()
+    # Show the plot
+    plt.show()
+    return 0
