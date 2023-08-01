@@ -1,4 +1,4 @@
-import pulse_wavefrom as pw
+import pulse_waveform as pw
 import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np

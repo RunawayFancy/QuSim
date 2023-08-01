@@ -1,6 +1,6 @@
 import numpy as np
 from qutip import *
-import pulse_wavefrom as pw
+import pulse_waveform as pw
 
 class qubit_system:
     """
@@ -30,15 +30,22 @@ class qubit_system:
         self.g = self.r
         self.num_q = len(self.w)  # Number of qubits
         self.q_dim = q_dim
-        self.a_list = enr_destroy(self.q_dim, excitations=self.N)  # Define the second quantization field operator
+        self.a_list = self.get_a_list()  # Define the second quantization field operator
         self.a_dagger_list = [dag(a) for a in self.a_list]
         self.H_q, self.H_a = self.get_Hq_Ha()
         self.H_inter = self.get_H_inter()
         self.H = 2 * np.pi * (self.H_q + self.H_a + self.H_inter)
         self.gamma_list = gamma_list
         self.state_dic = enr_state_dictionaries(self.q_dim, self.N)
+    
+    def get_a_list(self):
+        a_list = enr_destroy(self.q_dim, excitations=self.N)
+        row_shape, col_shape = a_list[0].shape[0], a_list[0].shape[1]
+        for a in a_list:
+            a.dims = [[row_shape], [col_shape]]
+        return a_list
 
-    def system_dynamics(self, simulation_option, pulse_sequence):
+    def system_dynamics_mesolve(self, simulation_option, pulse_sequence):
         state_list = simulation_option["initial_state"]
         result_list, angle_list = [], []
         for state in state_list:
@@ -54,6 +61,18 @@ class qubit_system:
             result_list.append(result)
             angle_list.append(angle)
         return result_list, angle_list
+    
+    def system_dynamics_propagator(self, simulation_option, pulse_sequence):
+        H_d = []
+        H_d.append(self.H)
+        for pulse in pulse_sequence:
+            H_d.append(self.send_pulse(pulse))
+        simulation_step = simulation_option["simulation_step"]
+        simulation_time = simulation_option["simulation_time"]
+        tlist=np.linspace(0, simulation_time, simulation_step)
+        option = Options(rtol=1e-8)
+        result = propagator(H_d, tlist, self.co_list(), {} , option)
+        return result
 
     def get_Hq_Ha(self):
         """

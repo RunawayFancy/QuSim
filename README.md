@@ -11,7 +11,7 @@ A simulator aim at simulating and solving Transmon based qubit-coupler-resonator
 
 This program is direct by Dr. Fei Yan, BAQIS. The original code structe is adoppted from Mr. Pan Shi, Wuhan University & BAQIS, and contributed by Mr. Jiheng Duan and Dr. Ruixia Wang.
 
-The original code by Mr. Shi is shown in `~\old_ver\`. The revised version using `enr_` construction from `qutip` is shown in `~\reconstructed_enr_ver\`, which is the version that we currently develop.
+The original code by Mr. Shi is shown in `~/old_ver/`. The revised version using `enr_` construction from `qutip` is shown in `~/reconstructed_enr_ver/`, which is the version that we currently develop.
 
 ## User_Guide <a name = "user_guide"></a>
 
