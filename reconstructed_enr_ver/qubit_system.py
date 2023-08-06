@@ -191,7 +191,8 @@ class qubit_system:
             # Get collapse down operator
             co_list.append(np.sqrt(self.gamma_list[q_index]["down"]) * self.a_list[q_index])
             # Get collapse z operator
-            co_list.append(np.sqrt(self.gamma_list[q_index]["z"]) * self.a_dagger_list[q_index] * self.a_list[q_index])
+            # Question marks: L_z = sqrt(2 Gamma_Z) a^dagger a
+            co_list.append(np.sqrt(2 * self.gamma_list[q_index]["z"]) * self.a_dagger_list[q_index] * self.a_list[q_index])
 
         return co_list
 
