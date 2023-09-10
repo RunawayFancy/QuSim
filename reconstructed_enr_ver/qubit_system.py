@@ -25,10 +25,11 @@ class qubit_system:
     def __init__(self, N, q_dim, w, alpha, r, gamma_list):
         self.N = N
         self.w = w
-        self.alpha = alpha
-        self.r = r
-        self.g = self.r
         self.num_q = len(self.w)  # Number of qubits
+        self.alpha = alpha
+        if self.num_q > 1: self.r = r
+        else: self.r = 0
+        self.g = self.r
         self.q_dim = q_dim
         self.a_list = self.get_a_list()  # Define the second quantization field operator
         self.a_dagger_list = [dag(a) for a in self.a_list]
@@ -93,9 +94,10 @@ class qubit_system:
 
     def get_H_inter(self):
         H_inter = 0
-        for q_index1 in range(self.num_q - 1):
-            for q_index2 in range(q_index1 + 1, self.num_q):
-                H_inter += self.g[q_index1][q_index2] * (self.a_list[q_index1] + self.a_dagger_list[q_index1]) * (self.a_list[q_index2] + self.a_dagger_list[q_index2])
+        if self.num_q > 1:
+            for q_index1 in range(self.num_q - 1):
+                for q_index2 in range(q_index1 + 1, self.num_q):
+                    H_inter += self.g[q_index1][q_index2] * (self.a_list[q_index1] + self.a_dagger_list[q_index1]) * (self.a_list[q_index2] + self.a_dagger_list[q_index2])
         return H_inter
 
     def get_state_index(self, n):
@@ -138,13 +140,14 @@ class qubit_system:
     #     return eigenstates, eigenenergies, max_index
     
     def send_pulse(self, pulse):
+        if pulse['q_index'] > self.num_q - 1: ValueError('Invalid qubit index:'+ pulse['pulse_index']+ ', q_index = ' + pulse['q_index'])
         pulse["amplitude"] *= 2 * np.pi
         if pulse["type"] == "XY":
             H_drive = self.H_XY_drive(pulse)
         elif pulse["type"] == "Z":
             H_drive = self.H_Z_bias(pulse)
         else:
-            raise ValueError("Invalid pulse type:" + pulse["type"])
+            raise ValueError("Invalid pulse type:"+ pulse['pulse_index']+ ', q_index = ' + pulse['pulse_index']+ ', type = '  + pulse["type"])
         pulse["amplitude"] /= 2 * np.pi
         return H_drive
 
