@@ -17,7 +17,7 @@ def plot_pulse_sequence(pulse_sequence, simulation_option):
         waveform_y = [drive_pulse(t, None) for t in t_list]  
         # Rescale the pulses by factor 1/1.2
         for i in range(len(t_list)):
-            if waveform_y[i] != None:
+            if waveform_y[i] != None and pulse_amp != 0:
                 waveform_y[i] /= pulse_amp
         channel_name = "{}{}".format(pulse["type"], pulse["q_index"])
         if channel_name in channel_dic:
