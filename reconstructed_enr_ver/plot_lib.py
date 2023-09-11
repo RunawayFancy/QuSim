@@ -4,16 +4,21 @@ import matplotlib
 import numpy as np
 
 def plot_pulse_sequence(pulse_sequence, simulation_option):
-    t_list = np.linspace(0, simulation_option["simulation_time"], 
+    t_list = np.linspace(0, simulation_option ["simulation_time"] + 0.01, 
     simulation_option["simulation_step"])
     channel_dic = {}
     q_index_list = []
     for pulse in pulse_sequence:
         pulse_lib = pw.pulse_lib(pulse)
+        pulse_amp = pulse["amplitude"]
         drive_pulse = pulse_lib.get_pulse()
         if pulse["q_index"] not in q_index_list:
             q_index_list.append(pulse["q_index"])
-        waveform_y = [drive_pulse(t, None) for t in t_list]
+        waveform_y = [drive_pulse(t, None) for t in t_list]  
+        # Rescale the pulses by factor 1/1.2
+        for i in range(len(t_list)):
+            if waveform_y[i] != None:
+                waveform_y[i] /= pulse_amp
         channel_name = "{}{}".format(pulse["type"], pulse["q_index"])
         if channel_name in channel_dic:
             channel_dic[channel_name] = np.array(channel_dic[channel_name]) + np.array(waveform_y)
