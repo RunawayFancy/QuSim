@@ -183,7 +183,7 @@ class qubit_system:
         # Get flux pulse
         pulse_lib_class = pw.pulse_lib(pulse)
         flux_pulse = pulse_lib_class.get_pulse()
-        return [self.a_list[q_index] + self.a_dagger_list[q_index], flux_pulse]
+        return [self.a_dagger_list[q_index] * self.a_list[q_index], flux_pulse]
     
     def co_list(self):
         co_list = []
