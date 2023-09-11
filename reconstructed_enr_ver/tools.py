@@ -3,11 +3,13 @@ import pickle
 import numpy as np
 from scipy.signal import find_peaks
 
-def r2matrix(r_dic):
-    n = len(r_dic)
+def r2matrix(r_dic, mum_bit):
+    n = mum_bit
     r = [[0] * n for _ in range(n)]
-    for i, key_i in enumerate(r_dic):
-        for j, key_j in enumerate(r_dic):
+    # if n ==1: r[0][0] = r_dic.get(f"r{1}{2}", 0)
+    # else:
+    for i in range(n):
+        for j in range(n):
             if j >= i:
                 r[i][j] = r_dic.get(f"r{i+1}{j+1}", 0)
     return r

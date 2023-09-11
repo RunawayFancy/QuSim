@@ -94,9 +94,10 @@ class qubit_system:
 
     def get_H_inter(self):
         H_inter = 0
+        # if self.num_q == 2: H_inter += self.g[0][0]
         if self.num_q > 1:
             for q_index1 in range(self.num_q - 1):
-                for q_index2 in range(q_index1 + 1, self.num_q):
+                for q_index2 in range(q_index1 + 1, self.num_q): 
                     H_inter += self.g[q_index1][q_index2] * (self.a_list[q_index1] + self.a_dagger_list[q_index1]) * (self.a_list[q_index2] + self.a_dagger_list[q_index2])
         return H_inter
 
@@ -175,7 +176,7 @@ class qubit_system:
         pulse_lib_class = pw.pulse_lib(pulse)
         XY_pulse = pulse_lib_class.get_pulse()
         
-        return [self.a_list[q_index] + self.a_dagger_list[q_index], XY_pulse]
+        return [self.a_dagger_list[q_index] * self.a_list[q_index], XY_pulse]
 
     def H_Z_bias(self, pulse):
         q_index = pulse["q_index"]
