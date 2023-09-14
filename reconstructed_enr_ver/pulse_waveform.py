@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+"""
+@author: Pan Shi, Jiheng Duan
+"""
 import numpy as np
 
 # cos in one period
@@ -47,26 +51,26 @@ class pulse_lib:
     
     def cos_waveform(self, t, args):
         t_relative = t - self.t_delay
-        if t_relative <= 0: 
+        if t_relative < 0: 
             return 0
-        if 0 < t_relative < self.t_rising:
+        if 0 <= t_relative <= self.t_rising:
             return self.ampli/2 * np.cos(self.freq * np.pi * 2 * t_relative + self.phase)* (1 - np.cos(np.pi * t_relative / self.t_rising)) + self.DRAG_waveform(t_relative, 0)
-        if self.t_rising <= t_relative <= self.t_g - self.t_rising:
+        if self.t_rising < t_relative < self.t_g - self.t_rising:
             return self.ampli * np.cos(self.freq * np.pi *  2 * t_relative)
-        if self.t_g - self.t_rising < t_relative  < self.t_g:
+        if self.t_g - self.t_rising <= t_relative  <= self.t_g:
             return self.ampli/2 * np.cos(self.freq * np.pi * 2 * t_relative + self.phase)* (1 - np.cos(np.pi * ( t_relative - self.t_g + 2 * self.t_rising)/self.t_rising)) + self.DRAG_waveform(t_relative, - self.t_g + 2 * self.t_rising)
-        if self.t_g <= t_relative: 
+        if self.t_g < t_relative: 
             return 0
         
     def sin_waveform(self, t, args):
         t_relative = t - self.t_delay
-        if t_relative <= 0:
+        if t_relative < 0:
             return 0
-        if 0 < t_relative < self.t_rising:
+        if 0 <= t_relative <= self.t_rising:
             return self.ampli * np.sin(np.pi/2 * t_relative/self.t_rising)
-        if self.t_rising <= t_relative <= self.t_g - self.t_rising:
+        if self.t_rising < t_relative <= self.t_g - self.t_rising:
             return self.ampli
-        if self.t_g - self.t_rising < t_relative <self.t_g:
+        if self.t_g - self.t_rising <= t_relative <= self.t_g:
             return self.ampli * np.sin(np.pi/2 * (t_relative - self.t_g + 2 * self.t_rising)/self.t_rising)
         if self.t_g < t_relative:
             return 0
@@ -74,14 +78,14 @@ class pulse_lib:
     def cosh_waveform(self, t, args):
         t_relative = t - self.t_delay
         zero1, zero2 = np.log(2-np.sqrt(3)), np.log(2+np.sqrt(3))
-        if t_relative <= 0:
+        if t_relative < 0:
             return 0
-        if 0 < t_relative < self.t_rising:
+        if 0 <= t_relative <= self.t_rising:
             x = zero1 * (t_relative/self.t_rising - 1)
             return self.ampli * ( - np.cosh(x) + 2)
-        if self.t_rising <= t_relative <= self.t_g - self.t_rising:
+        if self.t_rising < t_relative < self.t_g - self.t_rising:
             return self.ampli
-        if self.t_g - self.t_rising < t_relative <self.t_g:
+        if self.t_g - self.t_rising <= t_relative <= self.t_g:
             x = zero2 * (t_relative - self.t_g + self.t_rising)/self.t_rising
             return self.ampli * ( - np.cosh(x) + 2)
         if self.t_g < t_relative:

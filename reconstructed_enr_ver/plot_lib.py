@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+"""
+@author: Jiheng Duan
+"""
 import pulse_waveform as pw
 import matplotlib.pyplot as plt
 import matplotlib
@@ -18,7 +22,7 @@ def plot_pulse_sequence(pulse_sequence, simulation_option):
         # Rescale the pulses by factor 1/1.2
         for i in range(len(t_list)):
             if waveform_y[i] != None and pulse_amp != 0:
-                waveform_y[i] /= pulse_amp
+                waveform_y[i] /= np.abs(pulse_amp)
         channel_name = "{}{}".format(pulse["type"], pulse["q_index"])
         if channel_name in channel_dic:
             channel_dic[channel_name] = np.array(channel_dic[channel_name]) + np.array(waveform_y)

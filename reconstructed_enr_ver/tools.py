@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+"""
+@author: Jiheng Duan
+"""
 import os
 import pickle
 import numpy as np
@@ -94,6 +98,7 @@ def find_union(*lists):
 #         return current_indices, last_indices_cp
         
 class swap_avoid_crossing:
+    
     def __init__(self, energy_level, w_scan, threshold):
         self.energy_level = np.array(energy_level)
         self.energy_level_T = self.energy_level.T
@@ -163,3 +168,4 @@ class swap_avoid_crossing:
         for j in range(index2, len(my_list[0])):
             my_list[index1_low][j], my_list[index1_high][j] = my_list_copy[index1_high][j], my_list_copy[index1_low][j]
         return np.array(my_list)
+    

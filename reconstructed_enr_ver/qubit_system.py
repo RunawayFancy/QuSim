@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+"""
+@author: Pan Shi, Jiheng Duan
+"""
 import numpy as np
 from qutip import *
 import pulse_waveform as pw
@@ -16,21 +20,30 @@ class qubit_system:
         For qubit, let alpha < 0
         For resonator, let alpha = 0
     
-    g: array like
+    r: array like
         Two dimensional array, encoding
         the coupling strength between each
         two qubit
+
+    q_dim: array like
+        One dimensional list, defined by
+        `[qubit_dim for _ in range(len(w))]`
+    
+    gamma_list: array like
+        One dimensional list, containing multiple dictionaries
+        with numbers equal to the number of qubits.
     """
 
     def __init__(self, N, q_dim, w, alpha, r, gamma_list):
-        self.N = N
         self.w = w
         self.num_q = len(self.w)  # Number of qubits
+        self.q_dim = q_dim # Qubit dimension
+        if N != None: self.N = N # Turn on max photon numb
+        else: N = self.num_q * max(self.q_dim) + 1 # Turn off max photon numb
         self.alpha = alpha
         if self.num_q > 1: self.r = r
         else: self.r = 0
         self.g = self.r
-        self.q_dim = q_dim
         self.a_list = self.get_a_list()  # Define the second quantization field operator
         self.a_dagger_list = [dag(a) for a in self.a_list]
         self.H_q, self.H_a = self.get_Hq_Ha()
@@ -45,35 +58,6 @@ class qubit_system:
         for a in a_list:
             a.dims = [[row_shape], [col_shape]]
         return a_list
-
-    def system_dynamics_mesolve(self, simulation_option, pulse_sequence):
-        state_list = simulation_option["initial_state"]
-        result_list, angle_list = [], []
-        for state in state_list:
-            H_d = []
-            H_d.append(self.H)
-            for pulse in pulse_sequence:
-                H_d.append(self.send_pulse(pulse))
-            initial_state = state
-            simulation_step = simulation_option["simulation_step"]
-            simulation_time = simulation_option["simulation_time"]
-            # Set up master equation solver
-            result, angle = self.master_eq_solver(H_d, simulation_time, simulation_step, initial_state)
-            result_list.append(result)
-            angle_list.append(angle)
-        return result_list, angle_list
-    
-    def system_dynamics_propagator(self, simulation_option, pulse_sequence):
-        H_d = []
-        H_d.append(self.H)
-        for pulse in pulse_sequence:
-            H_d.append(self.send_pulse(pulse))
-        simulation_step = simulation_option["simulation_step"]
-        simulation_time = simulation_option["simulation_time"]
-        tlist=np.linspace(0, simulation_time, simulation_step)
-        option = Options(rtol=1e-8)
-        result = propagator(H_d, tlist, self.co_list(), {} , option)
-        return result
 
     def get_Hq_Ha(self):
         """
@@ -129,62 +113,6 @@ class qubit_system:
         # Return a qobj eigenstate, energy level magnitude, and the index of the energy  level
         return eigenstates, eigenenergies.real, max_index
     
-    # def get_eigenstates_energy(self, n):
-    #     '''
-    #     n: tuple
-    #         e.g., (0,0,0), (1,0,1)
-    #     '''
-    #     max_index = self.state_dic[1][n]
-    #     eigen_val_state = self.H.eigenstates()
-    #     eigenstates, eigenenergies = eigen_val_state[1][max_index], eigen_val_state[0][max_index]/2/np.pi
-    #     # Return a qobj eigenstate, energy level magnitude, and the index of the energy  level
-    #     return eigenstates, eigenenergies, max_index
-    
-    def send_pulse(self, pulse):
-        if pulse['q_index'] > self.num_q - 1: ValueError('Invalid qubit index:'+ pulse['pulse_index']+ ', q_index = ' + pulse['q_index'])
-        pulse["amplitude"] *= 2 * np.pi
-        if pulse["type"] == "XY":
-            H_drive = self.H_XY_drive(pulse)
-        elif pulse["type"] == "Z":
-            H_drive = self.H_Z_bias(pulse)
-        else:
-            raise ValueError("Invalid pulse type:"+ pulse['pulse_index']+ ', q_index = ' + pulse['pulse_index']+ ', type = '  + pulse["type"])
-        pulse["amplitude"] /= 2 * np.pi
-        return H_drive
-
-    def H_XY_drive(self, pulse):
-        """
-        Define the Hamiltonian of the system under XY pulse driving
-        t_g: float
-            The gate time
-        t_rising: float
-            The rising and lowering time of XY pulse
-        ampli: float
-            Amplitude of the XY pulse
-        freq: float
-            Frequency of the XY pulse
-        
-        ===========================
-
-        More features:
-            - DRAG pulse regime
-            - More pulse shape
-            T.B.C.
-        """
-        q_index = pulse["q_index"]
-        # Get pulse
-        pulse_lib_class = pw.pulse_lib(pulse)
-        XY_pulse = pulse_lib_class.get_pulse()
-        
-        return [self.a_dagger_list[q_index] * self.a_list[q_index], XY_pulse]
-
-    def H_Z_bias(self, pulse):
-        q_index = pulse["q_index"]
-        # Get flux pulse
-        pulse_lib_class = pw.pulse_lib(pulse)
-        flux_pulse = pulse_lib_class.get_pulse()
-        return [self.a_dagger_list[q_index] * self.a_list[q_index], flux_pulse]
-    
     def co_list(self):
         co_list = []
         if self.gamma_list is None:
@@ -199,6 +127,111 @@ class qubit_system:
             co_list.append(np.sqrt(2 * self.gamma_list[q_index]["z"]) * self.a_dagger_list[q_index] * self.a_list[q_index])
 
         return co_list
+    
+    def system_dynamics_mesolve(self, simulation_option, pulse_sequence):
+        """
+        A method
+        
+        """
+        state_list = simulation_option["initial_state"]
+        result_list, angle_list = [], []
+        for state in state_list:
+            H_d = []
+            H_d.append(self.H)
+            for pulse in pulse_sequence:
+                H_d.append(self.send_pulse(pulse))
+            initial_state = state
+            simulation_step = simulation_option["simulation_step"]
+            simulation_time = simulation_option["simulation_time"]
+            # Set up master equation solver
+            result, angle = self.master_eq_solver(H_d, simulation_time, simulation_step, initial_state)
+            result_list.append(result)
+            angle_list.append(angle)
+        return result_list, angle_list
+    
+    def system_dynamics_propagator(self, simulation_option, pulse_sequence):
+        H_d = []
+        H_d.append(self.H)
+        for pulse in pulse_sequence:
+            H_d.append(self.send_pulse(pulse))
+        simulation_step = simulation_option["simulation_step"]
+        simulation_time = simulation_option["simulation_time"]
+        tlist=np.linspace(0, simulation_time, simulation_step)
+        option = Options(rtol=1e-8)
+        result = propagator(H_d, tlist, self.co_list(), {} , option)
+        return result
+    
+    def send_pulse(self, pulse):
+        """
+        Construct dynamical component of the Hamiltonian H_d
+        """
+        if pulse['q_index'] > self.num_q - 1: ValueError('Invalid qubit index:'+ pulse['pulse_index']+ ', q_index = ' + pulse['q_index'])
+        pulse["amplitude"] *= 2 * np.pi
+        if pulse["type"] == "XY":
+            H_drive = self.H_XY_drive(pulse)
+        elif pulse["type"] == "Z":
+            H_drive = self.H_Z_bias(pulse)
+        else:
+            raise ValueError("Invalid pulse type:"+ pulse['pulse_index']+ ', q_index = ' + pulse['pulse_index']+ ', type = '  + pulse["type"])
+        pulse["amplitude"] /= 2 * np.pi
+        return H_drive
+
+    def H_XY_drive(self, pulse):
+        """
+        Define the Hamiltonian of the system under XY pulse driving
+
+        t_width: float
+            The sum of widths of the rising and lowering edges 
+        t_plateau: float
+            The width of plateau
+        t_delay:
+            The delay of the starting point of the pulse 
+        pulse_shape:
+            The waveform of the envelope
+        ampli: float
+            Amplitude of the XY pulse envelope
+        freq: float
+            Frequency of the XY pulse carrier
+        phase: float
+            Phase of the carrier
+        q_index:
+            The index of qubit that applied pulse to
+
+        ===========================
+
+        More features:
+            - More pulse shape
+            T.B.C.
+        """
+        q_index = pulse["q_index"]
+        # Get pulse
+        pulse_lib_class = pw.pulse_lib(pulse)
+        XY_pulse = pulse_lib_class.get_pulse()
+        
+        return [self.a_dagger_list[q_index] * self.a_list[q_index], XY_pulse]
+
+    def H_Z_bias(self, pulse):
+        """
+        Define the Hamiltonian of the system under Z pulse biasing
+
+        t_width: float
+            The sum of widths of the rising and lowering edges 
+        t_plateau: float
+            The width of plateau
+        t_delay:
+            The delay of the starting point of the pulse 
+        pulse_shape:
+            The waveform of the envelope
+        ampli: float
+            Amplitude of the Z pulse
+        q_index:
+            The index of qubit that applied pulse to
+        """
+        q_index = pulse["q_index"]
+        # Get flux pulse
+        pulse_lib_class = pw.pulse_lib(pulse)
+        flux_pulse = pulse_lib_class.get_pulse()
+        return [self.a_dagger_list[q_index] * self.a_list[q_index], flux_pulse]
 
     def master_eq_solver(self, H_d, t_simulation, simulation_step, initial_state):
         tlist=np.linspace(0, t_simulation, simulation_step)
