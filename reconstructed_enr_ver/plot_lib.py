@@ -25,9 +25,11 @@ def plot_pulse_sequence(pulse_sequence, simulation_option):
                 waveform_y[i] /= np.abs(pulse_amp)
         channel_name = "{}{}".format(pulse["type"], pulse["q_index"])
         if channel_name in channel_dic:
-            channel_dic[channel_name] = np.array(channel_dic[channel_name]) + np.array(waveform_y)
+            channel_dic[channel_name].append(waveform_y)
+            # channel_dic[channel_name] = np.array(channel_dic[channel_name]) + np.array(waveform_y)
         else:
-            channel_dic[channel_name] = waveform_y
+            channel_dic[channel_name] = [waveform_y]
+    # print(type(channel_dic['XY0']))
 
     # Define a custom sorting function to sort the channel names as desired
     def custom_sort(channel_name):
@@ -52,24 +54,35 @@ def plot_pulse_sequence(pulse_sequence, simulation_option):
 
     # Iterate over the channels and plot them vertically separated
     for i, channel_name in enumerate(sorted_channels):
-        waveform = channel_dic[channel_name]
-        vertical_offset = i * vertical_spacing
-        ax1.plot(t_list, waveform + vertical_offset, label=channel_name)
+        try:
+            iterator = iter(channel_dic[channel_name])
+        except TypeError:
+            pass
+        else:
+            index = 1
+            for waveform in channel_dic[channel_name]:
+            # waveform = channel_dic[channel_name]
+                vertical_offset = i * vertical_spacing
+                waveform_offset = waveform + vertical_offset
+                for jj in range(len(waveform_offset)):
+                    if waveform_offset[jj] == vertical_offset: waveform_offset[jj] = None
+                ax1.plot(t_list, waveform_offset, label=channel_name + str(index))
+                index += 1
 
     # Set the y-axis tick labels and limits for channel plot
     ax1.set_yticks(np.arange(len(channel_dic)) * vertical_spacing)
     ax1.set_yticklabels(sorted_channels)
     ax1.set_ylim(-vertical_spacing, len(channel_dic) * vertical_spacing)
-
+    ax1.set_xlim(0, simulation_option["simulation_time"])
     # Add legend and labels for channel plot
     # ax1.legend(loc="upper right")
     ax1.set_xlabel("Time/ns")
     ax1.set_ylabel("Channel")
-
+    
     # Create a twin axes for the pulse amplitude
     ax2 = ax1.twinx()
     ax2.set_ylim(-vertical_spacing, len(channel_dic) * vertical_spacing)
-
+    
     # Add label for the pulse amplitude axis
     ax2.set_ylabel("Pulse Amplitude")
 
