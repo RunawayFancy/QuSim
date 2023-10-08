@@ -208,7 +208,7 @@ class qubit_system:
         pulse_lib_class = pw.pulse_lib(pulse)
         XY_pulse = pulse_lib_class.get_pulse()
         
-        return [self.a_dagger_list[q_index] * self.a_list[q_index], XY_pulse]
+        return [self.a_dagger_list[q_index] + self.a_list[q_index], XY_pulse]
 
     def H_Z_bias(self, pulse):
         """
