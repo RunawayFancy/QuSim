@@ -1,4 +1,4 @@
-# Transmon_system_simulator
+# QuSim, A Transmon_system_simulator
 
 ## Table of Contents
 
