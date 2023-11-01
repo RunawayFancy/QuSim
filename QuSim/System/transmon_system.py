@@ -213,8 +213,6 @@ class qubit_system:
         # Get pulse
         pulse_lib_class = pw.pulse_lib(pulse)
 
-        # print('H_XY_drive, amp = {}'.format(pulse['amplitude']))
-
         XY_pulse = pulse_lib_class.get_pulse(simulation_option)
         
         return [-1j*self.a_dagger_list[q_index] + 1j*self.a_list[q_index], XY_pulse]
