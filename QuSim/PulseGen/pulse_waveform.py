@@ -30,6 +30,7 @@ class pulse_lib:
     
     def get_pulse(self, simulation_option):
         tlist = np.linspace(0, simulation_option["simulation_time"], simulation_option["simulation_step"])
+        delta_t = tlist[1] - tlist[0]
         pulse_shape = pulse_shape_dic[self.pulse_shape]
         drive_pulse = pulse_shape(tlist, self.pulse)
         if drive_pulse is None:
@@ -41,7 +42,7 @@ class pulse_lib:
                 # Multiple DRAG, define a new function
                 drag_scale_list, drag_delta_list, num_drag = self.DRAG_pulse_pend_list()
                 for i in range(num_drag):
-                    drive_pulse += self.DRAG(drive_pulse, drag_scale_list[i], drag_delta_list[i])
+                    drive_pulse += self.DRAG(drive_pulse, drag_scale_list[i], drag_delta_list[i], delta_t)
 
                 # Pulse detuning correction on
                 # After all DRAG
@@ -59,18 +60,13 @@ class pulse_lib:
         else: ValueError("Invalid pulse type: pulse_index = " + self.pulse_index + ', pulse_shape = ' + self.pulse_shape)
 
         return np.real(drive_pulse)
-    
-    # def carrier(self, tlist , freq , ph=0 , imb=0 ):
-    #     A = np.cos( np.pi/4 + imb) * np.sqrt(2)  ; 
-    #     B = np.sin( np.pi/4 + imb) * np.sqrt(2)  ; 
-    #     return A * np.cos( 2*np.pi*freq*tlist + ph) + 1j*B*np.sin( 2*np.pi*freq* tlist + ph) ; 
 
     def carrier(self, tlist, freq, phase = 0):
-        return np.exp(1j * (2 * np.pi * freq * tlist + phase))
+        return np.exp(-1j * (2 * np.pi * freq * tlist + phase))
     
-    def DRAG(self, drive_pulse, drag_scale, drag_delta):
-        if np.abs(drag_delta) < 1e-6: raise ValueError('DRAG delta value is too small = {}'.format(drag_delta))
-        return 1j*tools.grad(drive_pulse) * drag_scale/(drag_delta * 2 * np.pi) 
+    def DRAG(self, drive_pulse, drag_scale, drag_delta, delta_t):
+        # if np.abs(drag_delta) > 1: raise ValueError('DRAG delta value is too small = {}'.format(drag_delta))
+        return -1j*tools.grad(drive_pulse)/delta_t * drag_scale/(drag_delta * 2 * np.pi) 
 
     def DRAG_pulse_pend_list(self):
         try:

@@ -20,10 +20,12 @@ def plot_pulse_sequence(pulse_sequence, simulation_option):
             q_index_list.append(pulse["q_index"])
         # waveform_y = [drive_pulse(t, None) for t in t_list]  
         waveform_y = drive_pulse
+        
         # Rescale the pulses by factor 1/1.2
-        for i in range(len(t_list)):
-            if waveform_y[i] != None and pulse_amp != 0:
-                waveform_y[i] /= np.abs(pulse_amp)
+        # for i in range(len(t_list)):
+        #     if waveform_y[i] != None and pulse_amp != 0:
+        #         waveform_y[i] /= np.abs(pulse_amp)
+
         channel_name = "{}{}".format(pulse["type"], pulse["q_index"])
         if channel_name in channel_dic:
             channel_dic[channel_name].append(waveform_y)
