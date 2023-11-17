@@ -41,4 +41,4 @@ Our simulator includes the following features:
 * Multiple initial state simulation
 * Internal plot function
 * DRAG
-* Generalized for any qubt
+* Generalized for any qubit
