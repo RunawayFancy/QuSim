@@ -5,7 +5,7 @@
 import numpy as np
 from qutip import *
 import QuSim.PulseGen.pulse_waveform as pw
-import QuSim.Instruments.tools as tools
+import QuSim.Instruments.tools as tool
 
 def hermitian_conjugate(matrix):
     # Convert the input list to a NumPy array
@@ -86,7 +86,7 @@ class arb_qubit_system:
         for i in range(q_dim - 1):
             row = list(np.copy(empty_list))
             for j in range(i+1, q_dim):
-                row[j] = tools.get_v_element(coupling_dic, i, j)
+                row[j] = tool.get_v_element(coupling_dic, i, j)
             V_upper.append(row)
         # for i, v in enumerate(coupling):
         #     row = list(np.copy(empty_list))
@@ -109,7 +109,7 @@ class arb_qubit_system:
         for i in range(q_dim -1 ):
             row = list(np.copy(empty_list))
             for j in range(i+1, q_dim):
-                row[j] = tools.get_XY_element(driving_dic, i, j)
+                row[j] = tool.get_XY_element(driving_dic, i, j)
             H_XY_upper.append(row)
         H_XY_upper.append(empty_list)
         H_XY_lower = hermitian_conjugate(H_XY_upper)
@@ -128,32 +128,108 @@ class arb_qubit_system:
         H_Z.append(empty_list)
         for i in range(q_dim - 1):
             row = list(np.copy(empty_list))
-            row[i+1] = tools.get_Z_element(self.bias_list[qubit_index], i+1)
+            row[i+1] = tool.get_Z_element(self.bias_list[qubit_index], i+1)
             H_Z.append(row)
         H_Z_matrix = Qobj(H_Z)
         return H_Z_matrix
 
-    def get_state_index(self, n):
+    def get_state_index(self, n, freq_threshold = 1e-6, deg_threshold = 5e-3, deg_round = 7):
         '''
         n: tuple
             e.g., (0,0,0), (1,0,1)
+        
+        freq_threshold: float, double
+            The threshold of qubit frequency difference that 
+            is recognized as degeneracies happening
+        
+        deg_threshold: float, double
+            The threshold of probability amplitude that between
+            superposition states constructed by energy
+            degenerated states
+        
+        deg_round: int
+            The number of decimal number that will be rounded in 
+            estimating the probability amplitude of each degenerated 
+            state.
         '''
         state_index = self.state_dic[1][n]
-        eigen_list = [np.abs(arr[state_index][0][0].real) for arr in self.H.eigenstates()[1]]
+        eigen_list = [np.abs(arr[state_index][0][0]) for arr in self.H.eigenstates()[1]]
 
         max_value = max(eigen_list)
-        for index, value in enumerate(eigen_list):
-            if value == max_value:
-                max_index = index
-                break
+        max_index = np.argmax(np.array(eigen_list))
+        # print(len(eigen_list))
+        # print('eigen_list = {}'.format(eigen_list))
+        # print('max_value = {}',format(max_value))
+        # print('max_index = {}'.format(max_index))
+
+        sim_index = tool.find_similar_indices(np.array(self.w), freq_threshold)
+        if len(sim_index) > 0: 
+            degenerate_index = []
+            for index, value in enumerate(eigen_list):
+                if index == max_index: continue
+                if np.abs(value - max_value) < deg_threshold: # Not sufficient to say degeneracy is appears
+                    prob_amp_list = []
+
+                    # print(value)
+                    # Exam the state 
+                    for row in self.H.eigenstates()[1][index]:
+                        prob_amp_list.append(np.round(np.abs(row[0][0]), deg_round))
+
+                    # Count the number of equal array elements
+                    deg_prob_amp_list, num_degen_list = np.unique(np.array(prob_amp_list), return_counts=True)
+                    
+                    # print(deg_prob_amp_list)
+                    # print(num_degen_list)
+                    # Extracting the maximum degenerate
+                    i_max = np.argmax(deg_prob_amp_list)
+                    num_degen = num_degen_list[i_max]
+                    deg_prob_amp = deg_prob_amp_list[i_max]
+                    
+                    # print(deg_prob_amp)
+                    # print(num_degen)
+
+                    if num_degen > 1:
+                        degenerate_index.append(index)
+
+            # print(degenerate_index)
+            if len(degenerate_index) > 0:
+                degenerate_index.append(max_index)
+                deg_index_arr = np.sort(np.array(degenerate_index))
+
+                # Effective excitation number
+                num_excit = 0
+                for wi in sim_index:
+                    num_excit += n[wi]
+
+                count_n = 0
+                for ii,wi in enumerate(sim_index):
+                    if n[wi] != 0:
+                        count_n += 1 * 2**(ii)
+                max_index = deg_index_arr[count_n-1]
+        # print(max_index)
+
         return max_index
     
-    def get_eigenstates_energy(self, n):
+    def get_eigenstates_energy(self, n, freq_threshold = 1e-6, deg_threshold = 5e-3, deg_round = 7):
         '''
         n: tuple
             e.g., (0,0,0), (1,0,1)
+        
+        freq_threshold: float, double
+            The threshold of qubit frequency difference that 
+            is recognized as degeneracies happening
+        
+        deg_threshold: float, double
+            The threshold of probability amplitude that between
+            superposition states constructed by energy
+            degenerated states
+        
+        deg_round: int
+            The number of decimal number that will be rounded in 
+            estimating the probability amplitude of each degenerated 
+            state.
         '''
-        max_index = self.get_state_index(n)
+        max_index = self.get_state_index(n, freq_threshold = 1e-6, deg_threshold = 5e-3, deg_round = 7)
         eigen_val_state = self.H.eigenstates()
         eigenstates, eigenenergies = eigen_val_state[1][max_index], eigen_val_state[0][max_index]/2/np.pi
         
@@ -175,10 +251,10 @@ class arb_qubit_system:
                     gamma_sum += np.sqrt(self.gamma_list[q_index]["up"]) * a_dagger
             if "down" in self.gamma_list[q_index]:
                 if self.gamma_list[q_index]["down"] != 0:
-                    gamma_sum += np.sqrt(2 * self.gamma_list[q_index]["down"]) * a
+                    gamma_sum += np.sqrt(self.gamma_list[q_index]["down"]) * a
             if "z" in self.gamma_list[q_index]:
                 if self.gamma_list[q_index]["z"] != 0:
-                    gamma_sum += np.sqrt(self.gamma_list[q_index]["z"]) * a_dagger * a
+                    gamma_sum += np.sqrt(self.gamma_list[q_index]["z"] / 2) * a_dagger * a
             # Append the single qubit collapse operator to the collapse operator list
             if gamma_sum != 0:
                 qeye_list[q_index] = gamma_sum
@@ -187,7 +263,7 @@ class arb_qubit_system:
                 co_list.append(collapse_operator)
         return co_list
     
-    def system_dynamics_mesolve(self, simulation_option, pulse_sequence):
+    def system_dynamics_mesolve(self, simulation_option, pulse_sequence, option = Options(rtol=1e-8)):
         """
         A method
         
@@ -203,12 +279,23 @@ class arb_qubit_system:
             simulation_step = simulation_option["simulation_step"]
             simulation_time = simulation_option["simulation_time"]
             # Set up master equation solver
-            result, angle = self.master_eq_solver(H_d, simulation_time, simulation_step, initial_state)
+            result, angle = self.master_eq_solver(H_d, simulation_time, simulation_step, initial_state, option = Options(rtol=1e-8))
             result_list.append(result)
             angle_list.append(angle)
         return result_list, angle_list
     
-    def system_dynamics_propagator(self, simulation_option, pulse_sequence):
+    # def system_dynamics_propagator(self, simulation_option, pulse_sequence, option = Options(rtol=1e-8)):
+    #     H_d = []
+    #     H_d.append(self.H)
+    #     for pulse in pulse_sequence:
+    #         H_d.append(self.send_pulse(pulse, simulation_option))
+    #     simulation_step = simulation_option["simulation_step"]
+    #     simulation_time = simulation_option["simulation_time"]
+    #     tlist=np.linspace(0, simulation_time, simulation_step)
+    #     result = propagator(H_d, tlist, self.co_list(), {} , option)
+    #     return result
+    
+    def system_dynamics_propagator(self, simulation_option, pulse_sequence, option = Options(rtol=1e-8)):
         H_d = []
         H_d.append(self.H)
         for pulse in pulse_sequence:
@@ -216,8 +303,8 @@ class arb_qubit_system:
         simulation_step = simulation_option["simulation_step"]
         simulation_time = simulation_option["simulation_time"]
         tlist=np.linspace(0, simulation_time, simulation_step)
-        option = Options(rtol=1e-8)
-        result = propagator(H_d, tlist, self.co_list(), {} , option)
+        # tlist = simulation_time
+        result = propagator(H_d, tlist, self.co_list(), {} , option, parallel=True, progress_bar=True)
         return result
     
     def send_pulse(self, pulse, simulation_option):
@@ -306,9 +393,8 @@ class arb_qubit_system:
         H_Z.dims = [[self.total_dim], [self.total_dim]]
         return [H_Z, flux_pulse]
 
-    def master_eq_solver(self, H_d, t_simulation, simulation_step, initial_state):
+    def master_eq_solver(self, H_d, t_simulation, simulation_step, initial_state, option = Options(rtol=1e-8)):
         tlist=np.linspace(0, t_simulation, simulation_step)
-        option = Options(rtol=1e-8)
         result = mesolve(H_d, initial_state, tlist, self.co_list(), [], options=option) 
         angle = np.angle(initial_state.dag() * result.states[-1])
         return result, angle

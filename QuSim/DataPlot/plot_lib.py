@@ -9,7 +9,7 @@ import numpy as np
 
 def plot_pulse_sequence(pulse_sequence, simulation_option):
     t_list = np.linspace(0, simulation_option ["simulation_time"], 
-    simulation_option["simulation_step"])
+     simulation_option ["simulation_step"])
     channel_dic = {}
     q_index_list = []
     for pulse in pulse_sequence:

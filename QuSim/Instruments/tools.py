@@ -183,3 +183,13 @@ class swap_avoid_crossing:
         for j in range(index2, len(my_list[0])):
             my_list[index1_low][j], my_list[index1_high][j] = my_list_copy[index1_high][j], my_list_copy[index1_low][j]
         return np.array(my_list)
+
+def find_similar_indices(arr, threshold):
+    similar_indices = []
+    
+    for i in range(len(arr)):
+        for j in range(i+1, len(arr)):
+            if np.abs(arr[j] - arr[i]) < threshold:
+                similar_indices.extend([i, j])
+
+    return list(set(similar_indices))
