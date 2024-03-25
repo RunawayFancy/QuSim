@@ -214,7 +214,7 @@ class qubit_system:
     
     def system_dynamics_mesolve(self, simulation_option, pulse_sequence, option = Options(rtol=1e-8)):
         """
-        A method
+        A method to convert your defined system into the master equation solver in qutip.
         
         """
         state_list = simulation_option["initial_state"]
@@ -235,19 +235,6 @@ class qubit_system:
     
     def master_eq_solver(self, H_d, t_simulation, simulation_step, initial_state, option = Options(rtol=1e-8)):
         tlist = np.linspace(0, t_simulation, simulation_step)
-        # print(len(tlist))
-        # print(len(H_d[1][1]))
-        # option = Options(rtol=1e-8)
-        # print(H_d)
-        # print("==============================================================================")
-        # print(t_simulation)
-        # print("==============================================================================")
-        # print(simulation_step)
-        # print("==============================================================================")
-        # print(initial_state)
-        # print("==============================================================================")
-        # print(self.co_list())
-
         result = mesolve(H_d, initial_state, tlist, c_ops = self.co_list(), options = option) 
         angle = get_angle(initial_state, result)
         return result, angle
