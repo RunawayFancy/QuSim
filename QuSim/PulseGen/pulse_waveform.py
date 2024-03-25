@@ -5,6 +5,7 @@
 import numpy as np
 import QuSim.Instruments.tools as tools
 from QuSim.PulseGen.pulse_shape import pulse_shape_dic
+from QuSim.PulseGen.noise_gen import noise_gen
 
 # cos in one period
 # cos in half period
@@ -20,10 +21,11 @@ class pulse_lib:
         self.t_plateau = pulse["t_plateau"]
         self.t_delay = pulse["t_delay"]
         self.ampli = pulse["amplitude"]
-        if "freq" in pulse.keys(): self.freq = pulse["freq"]
-        if "phase" in pulse.keys(): self.phase = pulse["phase"]
         self.pulse_shape = pulse["pulse_shape"]
         self.pulse_type = pulse["type"]
+        self.freq = pulse.get("freq", 0)
+        self.phase = pulse.get("phase", 0)
+        self.noise_chan = pulse.get("noise", 0)
 
         self.t_g = self.t_width + self.t_plateau
         self.t_rising = self.t_width/2
@@ -36,7 +38,7 @@ class pulse_lib:
         if drive_pulse is None:
             raise ValueError("Invalid pulse shape: pulse_index = " + self.pulse_index + ', pulse_shape = ' + self.pulse_shape)
     
-        if self.pulse_type in ['XY', 'Z']:
+        if self.pulse_type in ['XY', 'Z', 'INT']:
             if 'DRAG_scale' in self.pulse or 'DRAG_delta' in self.pulse:
                 # DRAG correction
                 # Multiple DRAG, define a new function
@@ -57,9 +59,12 @@ class pulse_lib:
             # Multiply the carrier part
             carrier = self.carrier(tlist, self.freq, self.phase)
             drive_pulse *= carrier
+            drive_pulse = np.real(drive_pulse)
         else: ValueError("Invalid pulse type: pulse_index = " + self.pulse_index + ', pulse_shape = ' + self.pulse_shape)
-
-        return np.real(drive_pulse)
+        # Add noise
+        if self.noise_chan != 0:
+            drive_pulse = self.add_noise(np.real(drive_pulse), simulation_option)
+        return drive_pulse
 
     def carrier(self, tlist, freq, phase = 0):
         return np.exp(-1j * (2 * np.pi * freq * tlist + phase))
@@ -104,7 +109,11 @@ class pulse_lib:
                 drag_delta_list = [drag_delta]
         return drag_scale_list, drag_delta_list, num_drag
     
-    
+    def add_noise(self, wf, simulation_option):
+        for config in self.noise_chan:
+            noise = noise_gen(0, simulation_option["simulation_time"], simulation_option["simulation_step"], config)
+            wf += np.real(noise)
+        return wf
     # def get_pulse_old(self):
     #     if self.pulse_type == "XY":
     #         pulse_shape_mapping = {

@@ -3,9 +3,11 @@
 @author: Pan Shi, Jiheng Duan
 """
 import numpy as np
+import copy
 from qutip import *
 import QuSim.PulseGen.pulse_waveform as pw
 import QuSim.Instruments.tools as tool
+from QuSim.Instruments.angle import get_angle
 
 class qubit_system:
     """
@@ -222,7 +224,7 @@ class qubit_system:
             H_d.append(self.H)
             for pulse in pulse_sequence:
                 H_d.append(self.send_pulse(pulse, simulation_option))
-            initial_state = state
+            initial_state = copy.deepcopy(state)
             simulation_step = simulation_option["simulation_step"]
             simulation_time = simulation_option["simulation_time"]
             # Set up master equation solver
@@ -230,6 +232,25 @@ class qubit_system:
             result_list.append(result)
             angle_list.append(angle)
         return result_list, angle_list
+    
+    def master_eq_solver(self, H_d, t_simulation, simulation_step, initial_state, option = Options(rtol=1e-8)):
+        tlist = np.linspace(0, t_simulation, simulation_step)
+        # print(len(tlist))
+        # print(len(H_d[1][1]))
+        # option = Options(rtol=1e-8)
+        # print(H_d)
+        # print("==============================================================================")
+        # print(t_simulation)
+        # print("==============================================================================")
+        # print(simulation_step)
+        # print("==============================================================================")
+        # print(initial_state)
+        # print("==============================================================================")
+        # print(self.co_list())
+
+        result = mesolve(H_d, initial_state, tlist, c_ops = self.co_list(), options = option) 
+        angle = get_angle(initial_state, result)
+        return result, angle
     
     def system_dynamics_propagator(self, simulation_option, pulse_sequence, option = Options(rtol=1e-8)):
         H_d = []
@@ -240,7 +261,7 @@ class qubit_system:
         simulation_time = simulation_option["simulation_time"]
         tlist=np.linspace(0, simulation_time, simulation_step)
         # tlist = simulation_time
-        result = propagator(H_d, tlist, self.co_list(), {} , option, parallel=True, progress_bar=True)
+        result = propagator(H_d, tlist, self.co_list(), {} , option, progress_bar=True)
         return result
     
     def send_pulse(self, pulse, simulation_option):
@@ -294,6 +315,8 @@ class qubit_system:
 
         XY_pulse = pulse_lib_class.get_pulse(simulation_option)
         
+        # print([-1j*self.a_dagger_list[q_index] + 1j*self.a_list[q_index], XY_pulse])
+
         return [-1j*self.a_dagger_list[q_index] + 1j*self.a_list[q_index], XY_pulse]
 
     def H_Z_bias(self, pulse, simulation_option):
@@ -319,15 +342,6 @@ class qubit_system:
         flux_pulse = pulse_lib_class.get_pulse(simulation_option)
 
         return [self.a_dagger_list[q_index] * self.a_list[q_index], flux_pulse]
-
-    def master_eq_solver(self, H_d, t_simulation, simulation_step, initial_state, option=Options(rtol=1e-8)):
-        tlist = np.linspace(0, t_simulation, simulation_step)
-        # print(len(tlist))
-        # print(len(H_d[1][1]))
-        # option = Options(rtol=1e-8)
-        result = mesolve(H_d, initial_state, tlist, c_ops = self.co_list(), options = option) 
-        angle = np.angle(initial_state.dag() * result.states[-1])
-        return result, angle
 
     def get_data_list(self, result_list, simulation_option, state_list):
         simulation_step = simulation_option["simulation_step"]

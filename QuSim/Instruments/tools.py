@@ -21,10 +21,18 @@ def r2matrix(r_dic, frequency_list):
                 else: r[i][j] = 0
     return r
 
+def get_v_diag_element(v_dic, index1, index2):
+    if index1 != index2: raise ValueError("Invalid index: index1 != index2 when getting the coupling strength")
+    key = f"v{index1}{index2}"
+    if key in v_dic: return v_dic[key]
+    else: return 0
+
 def get_v_element(v_dic, index1, index2):
     if index1 >= index2: raise ValueError("Invalid index: index1 >= index2 when getting the coupling strength")
     key = f"v{index1}{index2}"
-    if key in v_dic: return v_dic[key]
+    if key in v_dic:
+        # print(key) 
+        return v_dic[key]
     else: return 0
 
 def get_XY_element(driving_dic, index1, index2):

@@ -3,9 +3,12 @@
 @author: Jiheng Duan
 """
 import numpy as np
+import copy
 from qutip import *
 import QuSim.PulseGen.pulse_waveform as pw
 import QuSim.Instruments.tools as tool
+from QuSim.Instruments.angle import get_angle
+
 
 def hermitian_conjugate(matrix):
     # Convert the input list to a NumPy array
@@ -27,12 +30,14 @@ class arb_qubit_system:
     A class of a multiple qubit interacting system
     """
 
-    def __init__(self, freq_list, inter_list, r=0, gamma_list=None, driving_list = None, bias_list = None):
+    def __init__(self, freq_list, inter_list=None, r=0, extra_list = None, gamma_list=None, driving_list = None, bias_list = None):
         self.freq_list = freq_list # Energy of each state, each qubit
+        self.w = self.get_w()
         self.num_q = len(self.freq_list) # Num of qubit
         self.inter_list = inter_list 
         if self.num_q > 1: self.r = r
         else: self.r = 0
+        self.extra_list = extra_list
         self.g = self.r # Coupling strength
         self.gamma_list = gamma_list # Lindblad operator
 
@@ -40,14 +45,24 @@ class arb_qubit_system:
         self.total_dim = np.prod(np.array(self.q_dim_list))
         self.qeye_list = [qeye(n) for n in self.q_dim_list]
         self.H_0 = self.get_H_0()
-        self.H_inter = self.get_H_inter()
-        self.H = 2 * np.pi * (self.H_0 + self.H_inter)
-        
+        if inter_list: self.H_inter = self.get_H_inter()
+        else: self.H_inter = 0
+        if extra_list: self.H_extra = self.get_H_extra()
+        else: self.H_extra = 0
+
+        self.H = 2 * np.pi * (self.H_0 + self.H_inter + self.H_extra)
+
         self.driving_list = driving_list
         self.bias_list = bias_list
 
         self.N = self.num_q * max(self.q_dim_list) + 1
         self.state_dic = enr_state_dictionaries(self.q_dim_list, self.N)
+
+    def get_w(self):
+        w = []
+        for case in self.freq_list:
+            w.append(case[1])
+        return w
 
     def get_H_0(self):
         H_0 = 0
@@ -62,44 +77,112 @@ class arb_qubit_system:
             dummy_qobj = Qobj(dummy_list)
             qeye_list[index] = dummy_qobj
             H_0 += cal_tensor(qeye_list)
-        H_0.dims = [[self.total_dim], [self.total_dim]]
+        # H_0.dims = [[self.total_dim], [self.total_dim]]
         return H_0
+    
+    def get_H_extra(self):
+        """
+        From extra matrix, construct H_extra Qobj
+        """
+        H_extra = 0
+        for index, extra in enumerate(self.extra_list):
+            qeye_list = self.qeye_list.copy()
+            qeye_list[index] = self.get_extra(index)
+            H_extra += cal_tensor(qeye_list)
+            # print(self.get_extra(index))
+        # H_extra.dims = [[self.total_dim], [self.total_dim]]
+        return H_extra
+
+    def get_extra(self, qubit_index):
+        """
+        Get extra matrix
+        """
+        # print(qubit_index)
+        q_dim = self.q_dim_list[qubit_index]
+        empty_list = [0 for i in range(q_dim)]
+        extra_dic = self.extra_list[qubit_index]
+        # print(extra_dic)
+        extra_upper = []
+        extra_diag = []
+        for i in range(q_dim - 1):
+            row = list(np.copy(empty_list))
+            row_diag = list(np.copy(empty_list))
+            for j in range(i, q_dim):
+                if j == i:
+                    row_diag[j] = tool.get_v_diag_element(extra_dic, i, j)
+                else:
+                    row[j] = tool.get_v_element(extra_dic, i, j)
+                    # print(row)
+            extra_upper.append(row)
+            extra_diag.append(row_diag)
+        extra_upper.append(empty_list)
+
+        # Append the diagonal matrix element
+        diag_list = list(np.copy(empty_list))
+        diag_list[q_dim - 1] = tool.get_v_diag_element(extra_dic, q_dim-1, q_dim-1)
+        extra_diag.append(diag_list)
+
+        # Get hermitian conjugate
+        extra_lower = hermitian_conjugate(extra_upper)
+        extra_matrix = Qobj(list(np.array(extra_upper) + np.array(extra_lower) + np.array(extra_diag)))
+        # print(V_matrix)
+        return extra_matrix
 
     def get_H_inter(self):
         H_inter = 0
         if self.g == 0: return 0
         if self.num_q > 1:
-            for q_index1 in range(self.num_q - 1):
-                for q_index2 in range(q_index1 + 1, self.num_q):
-                    qeye_list = self.qeye_list.copy()
-                    qeye_list[q_index1] = self.get_V(q_index1)
-                    qeye_list[q_index2] = self.get_V(q_index2)
-                    H_inter += self.g[q_index1][q_index2] * cal_tensor(qeye_list)
-        H_inter.dims = [[self.total_dim], [self.total_dim]]
+            if isinstance(self.inter_list[0], list): int_length = len(self.inter_list);
+            elif isinstance(self.inter_list[0], dict): int_length=1
+            else: raise(ValueError('Invaid inter_list form.'))
+            for int_index in range(int_length):
+                H_int_dummy = 0
+                for q_index1 in range(self.num_q - 1):
+                    for q_index2 in range(q_index1 + 1, self.num_q):
+                        qeye_list = self.qeye_list.copy()
+                        qeye_list[q_index1] = self.get_V(q_index1, int_index)
+                        qeye_list[q_index2] = self.get_V(q_index2, int_index)
+                        H_int_dummy += self.g[q_index1][q_index2] * cal_tensor(qeye_list)
+                H_inter += H_int_dummy
+        # H_inter.dims = [[self.total_dim], [self.total_dim]]
         return H_inter
 
-    def get_V(self, qubit_index):
+    def get_V(self, qubit_index, int_index):
         q_dim = self.q_dim_list[qubit_index]
         empty_list = [0 for i in range(q_dim)]
-        coupling_dic = self.inter_list[qubit_index]
+        if isinstance(self.inter_list[int_index], list):
+            coupling_dic = self.inter_list[int_index][qubit_index];
+        else: coupling_dic = self.inter_list[qubit_index];
         V_upper = []
+        V_diag = []
         for i in range(q_dim - 1):
             row = list(np.copy(empty_list))
-            for j in range(i+1, q_dim):
-                row[j] = tool.get_v_element(coupling_dic, i, j)
+            row_diag = list(np.copy(empty_list))
+            for j in range(i, q_dim):
+                if j == i:
+                    row_diag[j] = tool.get_v_diag_element(coupling_dic, i, j)
+                else:
+                    row[j] = tool.get_v_element(coupling_dic, i, j)
             V_upper.append(row)
+            V_diag.append(row_diag)
         # for i, v in enumerate(coupling):
         #     row = list(np.copy(empty_list))
         #     row[i+1] = v
         #     V_upper.append(row)
         V_upper.append(empty_list)
+
+        # Append the diagonal matrix element
+        diag_list = list(np.copy(empty_list))
+        diag_list[q_dim - 1] = tool.get_v_diag_element(coupling_dic, q_dim-1, q_dim-1)
+        V_diag.append(diag_list)
+
         # Get hermitian conjugate
         V_lower = hermitian_conjugate(V_upper)
-        V_matrix = Qobj(list(np.array(V_upper) + np.array(V_lower)))
+        V_matrix = Qobj(list(np.array(V_upper) + np.array(V_lower) + np.array(V_diag)))
         # print(V_matrix)
         return V_matrix
     
-    def get_H_XY_drive(self, qubit_index):
+    def get_H_XY_drive(self, qubit_index: int):
         if self.driving_list is None: return 0
 
         q_dim = self.q_dim_list[qubit_index]
@@ -116,7 +199,7 @@ class arb_qubit_system:
         H_XY_matrix = Qobj(list(np.array(H_XY_upper) + np.array(H_XY_lower)))
         return H_XY_matrix
     
-    def get_H_Z_bias(self, qubit_index):
+    def get_H_Z_bias(self, qubit_index: int):
         q_dim = self.q_dim_list[qubit_index]
         a = destroy(q_dim)
         a_dagger = dag(a)
@@ -132,8 +215,22 @@ class arb_qubit_system:
             H_Z.append(row)
         H_Z_matrix = Qobj(H_Z)
         return H_Z_matrix
+    
+    def get_H_int_bias(self, qubit_index: tuple):
+        q_index1, q_index2 = qubit_index
+        if isinstance(self.inter_list[0], list): int_length = len(self.inter_list);
+        elif isinstance(self.inter_list[0], dict): int_length=1
+        else: raise(ValueError('Invaid inter_list form.'))
+        H_int_bias_qobj = 0
+        for int_index in range(int_length):
+            qeye_list = self.qeye_list.copy()
+            qeye_list[q_index1] = self.get_V(q_index1,int_index)
+            qeye_list[q_index2] = self.get_V(q_index2,int_index)
+            H_int_bias_qobj += cal_tensor(qeye_list)
 
-    def get_state_index(self, n, freq_threshold = 1e-6, deg_threshold = 5e-3, deg_round = 7):
+        return H_int_bias_qobj
+
+    def get_state_index(self, n:tuple, freq_threshold = 1e-6, deg_threshold = 5e-3, deg_round = 7):
         '''
         n: tuple
             e.g., (0,0,0), (1,0,1)
@@ -210,7 +307,7 @@ class arb_qubit_system:
 
         return max_index
     
-    def get_eigenstates_energy(self, n, freq_threshold = 1e-6, deg_threshold = 5e-3, deg_round = 7):
+    def get_eigenstates_energy(self, n: tuple, freq_threshold = 1e-6, deg_threshold = 5e-3, deg_round = 7):
         '''
         n: tuple
             e.g., (0,0,0), (1,0,1)
@@ -236,6 +333,7 @@ class arb_qubit_system:
         # Return a qobj eigenstate, energy level magnitude, and the index of the energy  level
         return eigenstates, eigenenergies.real, max_index
     
+    @property
     def co_list(self):
         co_list = []
         if self.gamma_list is None:
@@ -259,13 +357,13 @@ class arb_qubit_system:
             if gamma_sum != 0:
                 qeye_list[q_index] = gamma_sum
                 collapse_operator = cal_tensor(qeye_list)
-                collapse_operator.dims = [[self.total_dim], [self.total_dim]]
+                # collapse_operator.dims = [[self.total_dim], [self.total_dim]]
                 co_list.append(collapse_operator)
         return co_list
     
     def system_dynamics_mesolve(self, simulation_option, pulse_sequence, option = Options(rtol=1e-8)):
         """
-        A method
+        A method to convert your defined system into the master equation solver in qutip.
         
         """
         state_list = simulation_option["initial_state"]
@@ -275,14 +373,29 @@ class arb_qubit_system:
             H_d.append(self.H)
             for pulse in pulse_sequence:
                 H_d.append(self.send_pulse(pulse, simulation_option))
-            initial_state = state
+            initial_state = copy.deepcopy(state)
             simulation_step = simulation_option["simulation_step"]
             simulation_time = simulation_option["simulation_time"]
             # Set up master equation solver
-            result, angle = self.master_eq_solver(H_d, simulation_time, simulation_step, initial_state, option = Options(rtol=1e-8))
+            result, angle = self.master_eq_solver(H_d, simulation_time, simulation_step, initial_state, option)
             result_list.append(result)
             angle_list.append(angle)
         return result_list, angle_list
+    
+    def master_eq_solver(self, H_d, t_simulation, simulation_step, initial_state, option = Options(rtol=1e-8)):
+        tlist=np.linspace(0, t_simulation, simulation_step)
+        # print(H_d)
+        # print("==============================================================================")
+        # print(t_simulation)
+        # print("==============================================================================")
+        # print(simulation_step)
+        # print("==============================================================================")
+        # print(initial_state)
+        # print("==============================================================================")
+        # print(self.co_list())
+        result = mesolve(H_d, initial_state, tlist, self.co_list, [], options = option) 
+        angle = get_angle(initial_state, result)
+        return result, angle
     
     # def system_dynamics_propagator(self, simulation_option, pulse_sequence, option = Options(rtol=1e-8)):
     #     H_d = []
@@ -304,25 +417,35 @@ class arb_qubit_system:
         simulation_time = simulation_option["simulation_time"]
         tlist=np.linspace(0, simulation_time, simulation_step)
         # tlist = simulation_time
-        result = propagator(H_d, tlist, self.co_list(), {} , option, parallel=True, progress_bar=True)
+        result = propagator(H_d, tlist, self.co_list, {} , option, parallel=True, progress_bar=True)
         return result
     
     def send_pulse(self, pulse, simulation_option):
         """
         Construct dynamical component of the Hamiltonian H_d
         """
-        if pulse['q_index'] > self.num_q - 1: ValueError('Invalid qubit index:'+ pulse['pulse_index']+ ', q_index = ' + pulse['q_index'])
+        q_index = pulse['q_index']
+
+        if isinstance(q_index, int):
+            if pulse['q_index'] > self.num_q - 1: ValueError('Invalid qubit index:'+ pulse['pulse_index']+ ', q_index = ' + pulse['q_index'])
+        elif isinstance(q_index, tuple):
+            q1, q2 = q_index
+            if np.max([q1,q2]) > self.num_q - 1: ValueError('Invalid qubit index:'+ pulse['pulse_index']+ ', q_index = ' + pulse['q_index'])
+        else: ValueError('Invalid qubit index type:'+ pulse['pulse_index']+ ', q_index = ' + pulse['q_index'])
+
         pulse["amplitude"] *= 2 * np.pi
         if pulse["type"] == "XY":
             H_drive = self.H_XY_drive(pulse, simulation_option)
         elif pulse["type"] == "Z":
             H_drive = self.H_Z_bias(pulse, simulation_option)
+        elif pulse["type"]  == "INT":
+            H_drive = self.H_int_bias(pulse, simulation_option)
         else:
             raise ValueError("Invalid pulse type:"+ pulse['pulse_index']+ ', q_index = ' + pulse['pulse_index']+ ', type = '  + pulse["type"])
         pulse["amplitude"] /= 2 * np.pi
         return H_drive
 
-    def H_XY_drive(self, pulse, simulation_option):
+    def H_XY_drive(self, pulse: dict, simulation_option: dict):
         """
         Define the Hamiltonian of the system under XY pulse driving
 
@@ -350,19 +473,34 @@ class arb_qubit_system:
             T.B.C.
         """
         q_index = pulse["q_index"]
-        # Get pulse
-        pulse_lib_class = pw.pulse_lib(pulse)
-        XY_pulse = pulse_lib_class.get_pulse(simulation_option)
-        # Get self driving Hamiltonian
-        H_XY_drive = self.get_H_XY_drive(q_index)
-        # Tensor product, get the total driving Hamiltonian
-        qeye_list = self.qeye_list.copy()
-        qeye_list[q_index] = H_XY_drive
-        H_XY = cal_tensor(qeye_list)
-        H_XY.dims = [[self.total_dim], [self.total_dim]]
+        if isinstance(q_index, int):
+            # Get pulse
+            if "custom" in pulse.keys(): swith = pulse["custom"]
+            else: swith = "off"
+            if swith == "on":
+                # print("1")
+                XY_pulse = pulse["time_series"] # Notice that the amplitude should be multiplied by 2 pi 
+            if swith == "off":
+                # print("2")
+                # pulse["amplitude"] *= 2 * np.pi
+                pulse_lib_class = pw.pulse_lib(pulse)
+                XY_pulse = pulse_lib_class.get_pulse(simulation_option)
+                # pulse["amplitude"] /= 2 * np.pi
+
+            
+            # Get self driving Hamiltonian
+            H_XY_drive = self.get_H_XY_drive(q_index)
+            # Tensor product, get the total driving Hamiltonian
+            qeye_list = self.qeye_list.copy()
+            qeye_list[q_index] = H_XY_drive
+            H_XY = cal_tensor(qeye_list)
+            # H_XY.dims = [[self.total_dim], [self.total_dim]]
+            # print([H_XY, XY_pulse])
+            # print("=====================================")
+        else: ValueError('Invalid qubit index type:'+ pulse['pulse_index']+ ', q_index = ' + pulse['q_index'])
         return [H_XY, XY_pulse]
 
-    def H_Z_bias(self, pulse, simulation_option):
+    def H_Z_bias(self, pulse:dict, simulation_option:dict):
         """
         Define the Hamiltonian of the system under Z pulse biasing
 
@@ -380,24 +518,34 @@ class arb_qubit_system:
             The index of qubit that applied pulse to
         """
         q_index = pulse["q_index"]
-        # Get flux pulse
-        pulse_lib_class = pw.pulse_lib(pulse)
-        flux_pulse = pulse_lib_class.get_pulse(simulation_option)
+        if isinstance(q_index, int):
+            # pulse["amplitude"] *= 2 * np.pi
+            # Get flux pulse
+            pulse_lib_class = pw.pulse_lib(pulse)
+            flux_pulse = pulse_lib_class.get_pulse(simulation_option)
+            # pulse["amplitude"] /= 2 * np.pi
 
-        # Get self bias Hamiltonian
-        H_Z_bias = self.get_H_Z_bias(q_index)
-        # Tensor product, get the total bias Hamiltonian
-        qeye_list = self.qeye_list.copy()
-        qeye_list[q_index] = H_Z_bias
-        H_Z = cal_tensor(qeye_list)
-        H_Z.dims = [[self.total_dim], [self.total_dim]]
+            # Get self bias Hamiltonian
+            H_Z_bias = self.get_H_Z_bias(q_index)
+            # Tensor product, get the total bias Hamiltonian
+            qeye_list = self.qeye_list.copy()
+            qeye_list[q_index] = H_Z_bias
+            H_Z = cal_tensor(qeye_list)
+            # H_Z.dims = [[self.total_dim], [self.total_dim]]
+        else: ValueError('Invalid qubit index type:'+ pulse['pulse_index']+ ', q_index = ' + pulse['q_index'])
         return [H_Z, flux_pulse]
-
-    def master_eq_solver(self, H_d, t_simulation, simulation_step, initial_state, option = Options(rtol=1e-8)):
-        tlist=np.linspace(0, t_simulation, simulation_step)
-        result = mesolve(H_d, initial_state, tlist, self.co_list(), [], options=option) 
-        angle = np.angle(initial_state.dag() * result.states[-1])
-        return result, angle
+    
+    def H_int_bias(self, pulse:dict, simulation_option:dict):
+        """
+         Define the Hamiltonian of the system under INT pulse biasing. The pulse will bias the coupling strength of the interaction strength.
+        """
+        q_index = pulse["q_index"]
+        if isinstance(q_index, tuple):
+            pulse_lib_class = pw.pulse_lib(pulse)
+            bias_pulse = pulse_lib_class.get_pulse(simulation_option)
+            
+        else: ValueError('Invalid qubit index type:'+ pulse['pulse_index']+ ', q_index = ' + pulse['q_index'])
+        return [self.get_H_int_bias(q_index), bias_pulse]
 
     def get_data_list(self, result_list, simulation_option, state_list):
         simulation_step = simulation_option["simulation_step"]

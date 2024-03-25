@@ -51,7 +51,7 @@ def plot_pulse_sequence(pulse_sequence, simulation_option):
 
     # Create the figure and axes
     fig, ax1 = plt.subplots()
-
+    fig.canvas.manager.set_window_title('pulse_sequence')
     # Set the vertical spacing between channel lines
     vertical_spacing = 2
 
@@ -137,12 +137,23 @@ def plot_zz_sweep(x_list:list, y_list:list, zz_list:list, x_label:str, y_label:s
     plt.show()
     return 0
 
-def plot_Elevel_dynamics(w_scan_space, energy_level_list, num_to_plot:int, label:str):
-    for j in range(num_to_plot):
+def plot_Elevel_dynamics(w_scan_space, energy_level_list, num_to_plot, label:str, xrange = [], yrange = []):
+    if isinstance(num_to_plot, int):
+        plot_list = range(num_to_plot)
+    if isinstance(num_to_plot, list):
+        if len(num_to_plot) ==2:
+            if num_to_plot[1] - num_to_plot[0] != 1:
+                plot_list = range(num_to_plot[0], num_to_plot[1])
+            else:
+                plot_list = num_to_plot
+        else:
+            plot_list = num_to_plot
+    for j in plot_list:
         plt.plot(w_scan_space, [v[j] for v in energy_level_list])
-
+    if len(xrange) > 1: plt.xlim(xrange)
+    if len(yrange) > 1: plt.ylim(yrange)
     plt.xlabel('${}$/GHz'.format(label))
-    plt.ylabel('Energy level')
-    plt.title("Energy level dynamics")
+    plt.ylabel('Energy (GHz)')
+    plt.title("Energy level")
     plt.show()
     return 0
