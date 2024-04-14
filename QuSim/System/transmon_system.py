@@ -6,6 +6,7 @@ import numpy as np
 import copy
 from qutip import *
 import QuSim.PulseGen.pulse_waveform as pw
+from QuSim.PulseGen.pulse_buffer import merge_pulse_chan
 import QuSim.Instruments.tools as tool
 from QuSim.Instruments.angle import get_angle
 
@@ -200,14 +201,17 @@ class qubit_system:
             return co_list
         for q_index in range(self.num_q):
             # Get collapse up operator
-            if self.gamma_list[q_index]["up"] != 0:
+            gamma_up = self.gamma_list[q_index].get("up", 0)
+            gamma_down = self.gamma_list[q_index].get("down", 0)
+            gamma_z = self.gamma_list[q_index].get("z", 0)
+            if gamma_up != 0:
                 co_list.append(np.sqrt(self.gamma_list[q_index]["up"]) * self.a_dagger_list[q_index])
             # Get collapse down operator
-            if self.gamma_list[q_index]["down"] != 0:
+            if gamma_down != 0:
                 co_list.append(np.sqrt(self.gamma_list[q_index]["down"]) * self.a_list[q_index])
             # Get collapse z operator
             # Question marks: L_z = sqrt(2 Gamma_Z) a^dagger a
-            if self.gamma_list[q_index]["z"] != 0:
+            if gamma_z != 0:
                 co_list.append(np.sqrt(self.gamma_list[q_index]["z"] / 2) * self.a_dagger_list[q_index] * self.a_list[q_index])
 
         return co_list
@@ -220,10 +224,16 @@ class qubit_system:
         state_list = simulation_option["initial_state"]
         result_list, angle_list = [], []
         for state in state_list:
-            H_d = []
+            H_d = []; pulse_buffer_list = [[] for ii in range(3)]
             H_d.append(self.H)
             for pulse in pulse_sequence:
-                H_d.append(self.send_pulse(pulse, simulation_option))
+                pulse_buffer_list = merge_pulse_chan(pulse_buffer_list, pulse, self.send_pulse(pulse, simulation_option))
+            for Hd_i in pulse_buffer_list[2]:
+                H_d.append(Hd_i)
+            # H_d = []
+            # H_d.append(self.H)
+            # for pulse in pulse_sequence:
+            #     H_d.append(self.send_pulse(pulse, simulation_option))
             initial_state = copy.deepcopy(state)
             simulation_step = simulation_option["simulation_step"]
             simulation_time = simulation_option["simulation_time"]
@@ -240,10 +250,16 @@ class qubit_system:
         return result, angle
     
     def system_dynamics_propagator(self, simulation_option, pulse_sequence, option = Options(rtol=1e-8)):
-        H_d = []
+        H_d = []; pulse_buffer_list = [[] for ii in range(3)]
         H_d.append(self.H)
         for pulse in pulse_sequence:
-            H_d.append(self.send_pulse(pulse, simulation_option))
+            pulse_buffer_list = merge_pulse_chan(pulse_buffer_list, pulse, self.send_pulse(pulse, simulation_option))
+        for Hd_i in pulse_buffer_list[2]:
+            H_d.append(Hd_i)
+        # H_d = []
+        # H_d.append(self.H)
+        # for pulse in pulse_sequence:
+        #     H_d.append(self.send_pulse(pulse, simulation_option))
         simulation_step = simulation_option["simulation_step"]
         simulation_time = simulation_option["simulation_time"]
         tlist=np.linspace(0, simulation_time, simulation_step)

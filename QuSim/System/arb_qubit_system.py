@@ -6,6 +6,7 @@ import numpy as np
 import copy
 from qutip import *
 import QuSim.PulseGen.pulse_waveform as pw
+from QuSim.PulseGen.pulse_buffer import merge_pulse_chan
 import QuSim.Instruments.tools as tool
 from QuSim.Instruments.angle import get_angle
 
@@ -216,7 +217,7 @@ class arb_qubit_system:
         H_Z_matrix = Qobj(H_Z)
         return H_Z_matrix
     
-    def get_H_int_bias(self, qubit_index: tuple):
+    def get_H_int_bias(self, qubit_index: list):
         q_index1, q_index2 = qubit_index
         if isinstance(self.inter_list[0], list): int_length = len(self.inter_list);
         elif isinstance(self.inter_list[0], dict): int_length=1
@@ -344,15 +345,15 @@ class arb_qubit_system:
             a = destroy(self.q_dim_list[q_index])
             a_dagger = dag(a)
             gamma_sum = 0
-            if "up" in self.gamma_list[q_index]: 
-                if self.gamma_list[q_index]["up"] != 0:
-                    gamma_sum += np.sqrt(self.gamma_list[q_index]["up"]) * a_dagger
-            if "down" in self.gamma_list[q_index]:
-                if self.gamma_list[q_index]["down"] != 0:
-                    gamma_sum += np.sqrt(self.gamma_list[q_index]["down"]) * a
-            if "z" in self.gamma_list[q_index]:
-                if self.gamma_list[q_index]["z"] != 0:
-                    gamma_sum += np.sqrt(self.gamma_list[q_index]["z"] / 2) * a_dagger * a
+            gamma_up = self.gamma_list[q_index].get("up", 0)
+            gamma_down = self.gamma_list[q_index].get("down", 0)
+            gamma_z = self.gamma_list[q_index].get("z", 0)
+            if gamma_up != 0:
+                gamma_sum += np.sqrt(self.gamma_list[q_index]["up"]) * a_dagger
+            if gamma_down != 0:
+                gamma_sum += np.sqrt(self.gamma_list[q_index]["down"]) * a
+            if gamma_z != 0:
+                gamma_sum += np.sqrt(self.gamma_list[q_index]["z"] / 2) * a_dagger * a
             # Append the single qubit collapse operator to the collapse operator list
             if gamma_sum != 0:
                 qeye_list[q_index] = gamma_sum
@@ -369,10 +370,16 @@ class arb_qubit_system:
         state_list = simulation_option["initial_state"]
         result_list, angle_list = [], []
         for state in state_list:
-            H_d = []
+            H_d = []; pulse_buffer_list = [[] for ii in range(3)]
             H_d.append(self.H)
             for pulse in pulse_sequence:
-                H_d.append(self.send_pulse(pulse, simulation_option))
+                pulse_buffer_list = merge_pulse_chan(pulse_buffer_list, pulse, self.send_pulse(pulse, simulation_option))
+            for Hd_i in pulse_buffer_list[2]:
+                H_d.append(Hd_i)
+            # H_d = []
+            # H_d.append(self.H)
+            # for pulse in pulse_sequence:
+            #     H_d.append(self.send_pulse(pulse, simulation_option))
             initial_state = copy.deepcopy(state)
             simulation_step = simulation_option["simulation_step"]
             simulation_time = simulation_option["simulation_time"]
@@ -408,16 +415,18 @@ class arb_qubit_system:
     #     result = propagator(H_d, tlist, self.co_list(), {} , option)
     #     return result
     
-    def system_dynamics_propagator(self, simulation_option, pulse_sequence, option = Options(rtol=1e-8)):
-        H_d = []
+    def system_dynamics_propagator(self, simulation_option, pulse_sequence, option = Options(rtol=1e-8), do_parallel = True, do_progress_bar=True):
+        H_d = []; pulse_buffer_list = [[] for ii in range(3)]
         H_d.append(self.H)
         for pulse in pulse_sequence:
-            H_d.append(self.send_pulse(pulse, simulation_option))
+            pulse_buffer_list = merge_pulse_chan(pulse_buffer_list, pulse, self.send_pulse(pulse, simulation_option))
+        for Hd_i in pulse_buffer_list[2]:
+            H_d.append(Hd_i)
         simulation_step = simulation_option["simulation_step"]
         simulation_time = simulation_option["simulation_time"]
         tlist=np.linspace(0, simulation_time, simulation_step)
         # tlist = simulation_time
-        result = propagator(H_d, tlist, self.co_list, {} , option, parallel=True, progress_bar=True)
+        result = propagator(H_d, tlist, self.co_list, {} , option, parallel=do_parallel, progress_bar=do_progress_bar)
         return result
     
     def send_pulse(self, pulse, simulation_option):
@@ -428,7 +437,7 @@ class arb_qubit_system:
 
         if isinstance(q_index, int):
             if pulse['q_index'] > self.num_q - 1: ValueError('Invalid qubit index:'+ pulse['pulse_index']+ ', q_index = ' + pulse['q_index'])
-        elif isinstance(q_index, tuple):
+        elif isinstance(q_index, list):
             q1, q2 = q_index
             if np.max([q1,q2]) > self.num_q - 1: ValueError('Invalid qubit index:'+ pulse['pulse_index']+ ', q_index = ' + pulse['q_index'])
         else: ValueError('Invalid qubit index type:'+ pulse['pulse_index']+ ', q_index = ' + pulse['q_index'])
@@ -540,7 +549,7 @@ class arb_qubit_system:
          Define the Hamiltonian of the system under INT pulse biasing. The pulse will bias the coupling strength of the interaction strength.
         """
         q_index = pulse["q_index"]
-        if isinstance(q_index, tuple):
+        if isinstance(q_index, list):
             pulse_lib_class = pw.pulse_lib(pulse)
             bias_pulse = pulse_lib_class.get_pulse(simulation_option)
             
