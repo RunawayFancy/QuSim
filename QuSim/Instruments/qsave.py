@@ -61,10 +61,11 @@ class qsave:
         # Check the user's input and respond
         if response.lower() == 'y':
             count, filename = pickle.load(open(self.path+"counts.pkl", "rb"))
-            print("Undoing the process...")
+            # print("Undoing the process...")
             fpath = self.path+filename
             try:
                 os.remove(fpath)
+                print(f"Successfully undo {filename}")
             # Add code here to undo the process
             except FileNotFoundError:
                 print(f"The file {fpath} does not exist.")
@@ -81,8 +82,8 @@ class qsave:
             print("Invalid input. Please enter 'y' or 'n'.")
 
     def save(self, filename: str ,data=None, scan=None):
-        filename = filename + '.pkl'
         count, _ = pickle.load(open(self.path + "counts.pkl", "rb"))
+        filename = filename + f'_{count}.pkl'
         # scan save, need a formate scan dict.
         if scan is not None:
             exit(0)
