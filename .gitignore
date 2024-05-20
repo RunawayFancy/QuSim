@@ -157,11 +157,5 @@ Data/
 .conda/
 build/
 QuSim.egg-info/
-ST0_qubit/
 setup.py
-Tutorial/arb_qubit_tutorial/ST0_qubit/erasure_qubit/
-iswap_like_v2.ipynb
-CZ_ST0_pure.ipynb
-ST0_qubit/
-
 *.pkl

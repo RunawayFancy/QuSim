@@ -370,11 +370,11 @@ class arb_qubit_system:
         state_list = simulation_option["initial_state"]
         result_list, angle_list = [], []
         for state in state_list:
-            H_d = []; pulse_buffer_list = [[] for ii in range(3)]
+            H_d = []; pulse_buffer_lst = [[] for ii in range(3)]
             H_d.append(self.H)
             for pulse in pulse_sequence:
-                pulse_buffer_list = merge_pulse_chan(pulse_buffer_list, pulse, self.send_pulse(pulse, simulation_option))
-            for Hd_i in pulse_buffer_list[2]:
+                pulse_buffer_lst = merge_pulse_chan(pulse_buffer_lst, pulse, self.send_pulse(pulse, simulation_option))
+            for Hd_i in pulse_buffer_lst[2]:
                 H_d.append(Hd_i)
             # H_d = []
             # H_d.append(self.H)

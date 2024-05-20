@@ -64,6 +64,8 @@ class pulse_lib:
         # Add noise
         if self.noise_chan != 0:
             drive_pulse = self.add_noise(np.real(drive_pulse), simulation_option)
+        if 'offset' in self.pulse:
+            drive_pulse += self.pulse["offset"]
         return drive_pulse
 
     def carrier(self, tlist, freq, phase = 0):
