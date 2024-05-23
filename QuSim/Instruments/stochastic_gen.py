@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+"""
+@author: Jiheng Duan
+"""
 import numpy as np
 import copy
 
