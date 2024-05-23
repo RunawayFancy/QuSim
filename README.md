@@ -1,4 +1,4 @@
-# QuSim, A transmon system simulator
+# QuSim, a transmon system simulator
 
 <img src="QuSim_logo.png" alt="Alt text" width="330" height="300">
 
