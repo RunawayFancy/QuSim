@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+"""
+@author: Jiheng Duan
+"""
 import numpy as np
 from scipy.signal import find_peaks
 
