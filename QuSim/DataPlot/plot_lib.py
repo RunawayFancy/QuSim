@@ -2,7 +2,7 @@
 """
 @author: Jiheng Duan
 """
-import QuSim.PulseGen.pulse_waveform as pw
+import qusim.PulseGen.pulse_waveform as pw
 import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np

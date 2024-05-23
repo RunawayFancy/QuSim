@@ -5,10 +5,10 @@
 import numpy as np
 import copy
 from qutip import *
-import QuSim.PulseGen.pulse_waveform as pw
-from QuSim.PulseGen.pulse_buffer import merge_pulse_chan
-import QuSim.Instruments.tools as tool
-from QuSim.Instruments.angle import get_angle
+import qusim.PulseGen.pulse_waveform as pw
+from qusim.PulseGen.pulse_buffer import merge_pulse_chan
+import qusim.Instruments.tools as tool
+from qusim.Instruments.angle import get_angle
 
 class qubit_system:
     """

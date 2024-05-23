@@ -3,9 +3,9 @@
 @author: Pan Shi, Jiheng Duan
 """
 import numpy as np
-import QuSim.Instruments.tools as tools
-from QuSim.PulseGen.pulse_shape import pulse_shape_dic
-from QuSim.PulseGen.noise_gen import noise_gen
+import qusim.Instruments.tools as tools
+from qusim.PulseGen.pulse_shape import pulse_shape_dic
+from qusim.PulseGen.noise_gen import noise_gen
 
 # cos in one period
 # cos in half period

@@ -2,7 +2,7 @@
 """
 @author: Jiheng Duan
 """
-import QuSim.PulseGen.edges as edges
+import qusim.PulseGen.edges as edges
 import numpy as np
 
 def cosine(tlist, pulse):

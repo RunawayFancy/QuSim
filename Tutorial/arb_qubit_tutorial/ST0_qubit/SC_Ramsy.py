@@ -1,12 +1,12 @@
 import sys
-# This on is a path correcting code, which is used to find the path of QuSim.
+# This on is a path correcting code, which is used to find the path of qusim.
 sys.path.append('../../..')
-import QuSim.DataPlot.plot_lib as pl
-import QuSim.Instruments.tools as tools
-import QuSim.Instruments.stochastic_gen as sg
-import QuSim.System.transmon_system as qs
-import QuSim.Instruments.angle as  ang
-from QuSim.Instruments.angle import get_angle
+import qusim.DataPlot.plot_lib as pl
+import qusim.Instruments.tools as tools
+import qusim.Instruments.stochastic_gen as sg
+import qusim.System.transmon_system as qs
+import qusim.Instruments.angle as  ang
+from qusim.Instruments.angle import get_angle
 
 import numpy as np
 import json

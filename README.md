@@ -1,4 +1,4 @@
-# QuSim, A Transmon_system_simulator
+# qusim, A Transmon_system_simulator
 
 ## Table of Contents
 
@@ -9,13 +9,13 @@
 
 A simulator aim at simulating and solving Transmon based qubit-coupler-resonator system.
 
-This program is direct by Dr. Fei Yan, BAQIS. The original code structe is adoppted from Mr. Pan Shi, Wuhan University & BAQIS, and contributed by Mr. Jiheng Duan and Dr. Ruixia Wang.
+This program is direct by Dr. Fei Yan, BAQIS. The original code structe is adoppted from Mr. Pan Shi, Wuhan University & BAQIS, and contributed by Mr. Jiheng Duan and Dr. Ruixia Wang, and Dr. Zhen Chen.
 
 ## User_Guide <a name = "user_guide"></a>
 
 ### Requirement
 
-You are required to install all these python packages in the system for running this simulator.
+You are required to install all these python packages in the system for running this simulator. See `requirements.txt`.
 >* `Python`, version >= 3.10
 >* `qutip`, version >= 4.6.3
 >>* `qutip 4.6.3` is strongly recommanded. As we use `qutip 4.7.5`, the `propagator` solver will crash your terminal.

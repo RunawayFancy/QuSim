@@ -155,7 +155,6 @@ cython_debug/
 
 Data/
 .conda/
-build/
-QuSim.egg-info/
-setup.py
+qusim.egg-info/
 *.pkl
+test.ipynb
