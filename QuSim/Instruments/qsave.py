@@ -10,6 +10,17 @@ class qsave:
 
     def __init__(self, path):
         self.path = path
+        self.init_directory()
+
+    def init_directory(self):
+        if not os.path.exists(self.path):
+            try:
+                os.makedirs(self.path)
+                print(f'Directory {self.path} created successfully.')
+            except Exception as e:
+                print(f"An error occurred while creating directory {self.path}: {e}")
+        else:
+            print(f'Directory {self.path} exists.')
 
     @property
     def init(self):
