@@ -158,3 +158,4 @@ Data/
 qusim.egg-info/
 *.pkl
 test.ipynb
+project/
