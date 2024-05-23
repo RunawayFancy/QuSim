@@ -11,7 +11,7 @@
 
 A simulator aim at simulating and solving Transmon based qubit-coupler-resonator system.
 
-This program is direct by Dr. Fei Yan, BAQIS. The original code structe is adoppted from Mr. Pan Shi, Wuhan University & BAQIS, and contributed by Mr. Jiheng Duan and Dr. Ruixia Wang, and Dr. Zhen Chen.
+This program is directed by Dr. Fei Yan, BAQIS. The original code structe is adoppted from Mr. Pan Shi, Wuhan University & BAQIS, and contributed by Mr. Jiheng Duan and Dr. Ruixia Wang, and Dr. Zhen Chen.
 
 ## User_Guide <a name = "user_guide"></a>
 
