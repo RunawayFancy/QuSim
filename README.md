@@ -13,6 +13,12 @@ This program is direct by Dr. Fei Yan, BAQIS. The original code structe is adopp
 
 ## User_Guide <a name = "user_guide"></a>
 
+### Install (use pip)
+
+```
+pip install qusim
+```
+
 ### Requirement
 
 You are required to install all these python packages in the system for running this simulator. See `requirements.txt`.
@@ -44,3 +50,6 @@ Our simulator includes the following features:
 * Internal plot function
 * DRAG
 * Generalized for any qubit
+* Good data saving and loading functions
+* Tunable coupler helper
+* Aviod crossing helper
