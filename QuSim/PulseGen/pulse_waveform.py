@@ -6,6 +6,7 @@ import numpy as np
 import qusim.Instruments.tools as tools
 from qusim.PulseGen.pulse_shape import pulse_shape_dic
 from qusim.PulseGen.noise_gen import noise_gen
+import copy
 
 # cos in one period
 # cos in half period
@@ -37,7 +38,7 @@ class pulse_lib:
         drive_pulse = pulse_shape(tlist, self.pulse)
         if drive_pulse is None:
             raise ValueError("Invalid pulse shape: pulse_index = " + self.pulse_index + ', pulse_shape = ' + self.pulse_shape)
-    
+            
         if self.pulse_type in ['XY', 'Z', 'INT']:
             if 'DRAG_scale' in self.pulse or 'DRAG_delta' in self.pulse:
                 # DRAG correction
@@ -64,8 +65,10 @@ class pulse_lib:
         # Add noise
         if self.noise_chan != 0:
             drive_pulse = self.add_noise(np.real(drive_pulse), simulation_option)
+        # print(drive_pulse.dtype)
         if 'offset' in self.pulse:
-            drive_pulse += self.pulse["offset"]
+            offset_pulse = self.get_offset(simulation_option)
+            drive_pulse += offset_pulse
         return drive_pulse
 
     def carrier(self, tlist, freq, phase = 0):
@@ -116,6 +119,14 @@ class pulse_lib:
             noise = noise_gen(0, simulation_option["simulation_time"], simulation_option["simulation_step"], config)
             wf += np.real(noise)
         return wf
+    
+    def get_offset(self, simulation_option):
+        pulse = copy.deepcopy(self.pulse)
+        pulse["amplitude"] = pulse["offset"]
+        tlist = np.linspace(0, simulation_option["simulation_time"], simulation_option["simulation_step"])
+        pulse_shape = pulse_shape_dic["square"]
+        offset_pulse = pulse_shape(tlist, pulse)
+        return np.real(offset_pulse)
     # def get_pulse_old(self):
     #     if self.pulse_type == "XY":
     #         pulse_shape_mapping = {

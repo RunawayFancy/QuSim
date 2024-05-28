@@ -21,7 +21,7 @@ def cosh(tlist, pulse):
     return pulse['amplitude'] * edges.hcosh_edge(tlist, pulse['t_delay'], pulse['t_width'], pulse['t_plateau'])
 
 def square(tlist, pulse):
-    return pulse['amplitude'] * ( ((tlist > pulse['t_delay']) & (tlist < pulse['t_delay'] + pulse['t_width'] + pulse['t_plateau']) ) + 0j )
+    return pulse['amplitude'] * ( ((tlist >= pulse['t_delay']) & (tlist <= pulse['t_delay'] + pulse['t_width'] + pulse['t_plateau']) ) + 0j )
 
 def tanh(tlist, pulse):
     if 'epsilon' in pulse:
