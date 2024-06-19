@@ -86,7 +86,8 @@ class qubit_system:
         if self.num_q > 1:
             for q_index1 in range(self.num_q - 1):
                 for q_index2 in range(q_index1 + 1, self.num_q): 
-                    H_inter += self.g[q_index1][q_index2] * (self.a_list[q_index1] + self.a_dagger_list[q_index1]) * (self.a_list[q_index2] + self.a_dagger_list[q_index2])
+                    H_inter += self.g[q_index1][q_index2] * np.sqrt(self.w[q_index1] * self.w[q_index2]) * (self.a_list[q_index1] + self.a_dagger_list[q_index1]) * (self.a_list[q_index2] + self.a_dagger_list[q_index2])
+                    # H_inter += self.g[q_index1][q_index2] * (self.a_list[q_index1] + self.a_dagger_list[q_index1]) * (self.a_list[q_index2] + self.a_dagger_list[q_index2])
         return H_inter
 
     def get_state_index(self, n, freq_threshold = 1e-6, deg_threshold = 5e-3, deg_round = 7):
