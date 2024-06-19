@@ -345,15 +345,20 @@ class arb_qubit_system:
             a = destroy(self.q_dim_list[q_index])
             a_dagger = dag(a)
             gamma_sum = 0
+
             gamma_up = self.gamma_list[q_index].get("up", 0)
             gamma_down = self.gamma_list[q_index].get("down", 0)
             gamma_z = self.gamma_list[q_index].get("z", 0)
+            gamma_x = self.gamma_list[q_index].get("x", 0)
+
             if gamma_up != 0:
-                gamma_sum += np.sqrt(self.gamma_list[q_index]["up"]) * a_dagger
+                gamma_sum += np.sqrt(gamma_up) * a_dagger
             if gamma_down != 0:
-                gamma_sum += np.sqrt(self.gamma_list[q_index]["down"]) * a
+                gamma_sum += np.sqrt(gamma_down) * a
             if gamma_z != 0:
-                gamma_sum += np.sqrt(self.gamma_list[q_index]["z"] / 2) * a_dagger * a
+                gamma_sum += np.sqrt(gamma_z / 2) * a_dagger * a # Pure dephasing along z-axis
+            if gamma_x != 0:
+                gamma_sum += np.sqrt(gamma_x / 2) * (a_dagger + a) # Pure dephasing along x-axis
             # Append the single qubit collapse operator to the collapse operator list
             if gamma_sum != 0:
                 qeye_list[q_index] = gamma_sum
