@@ -38,7 +38,7 @@ class qubit_system:
         with numbers equal to the number of qubits.
     """
 
-    def __init__(self, N, q_dim, w, alpha, r=0, gamma_list = None):
+    def __init__(self, N, q_dim, w, alpha, r=0, gamma_list = None, g_freq = True):
         self.w = w
         self.num_q = len(self.w)  # Number of qubits
         self.q_dim = q_dim # Qubit dimension
@@ -48,6 +48,7 @@ class qubit_system:
         if self.num_q > 1: self.r = r
         else: self.r = 0
         self.g = self.r
+        self.g_freq = g_freq
         self.a_list = self.get_a_list()  # Define the second quantization field operator
         self.a_dagger_list = [dag(a) for a in self.a_list]
         self.H_q, self.H_a = self.get_Hq_Ha()
@@ -86,8 +87,10 @@ class qubit_system:
         if self.num_q > 1:
             for q_index1 in range(self.num_q - 1):
                 for q_index2 in range(q_index1 + 1, self.num_q): 
-                    H_inter += self.g[q_index1][q_index2] * np.sqrt(self.w[q_index1] * self.w[q_index2]) * (self.a_list[q_index1] + self.a_dagger_list[q_index1]) * (self.a_list[q_index2] + self.a_dagger_list[q_index2])
-                    # H_inter += self.g[q_index1][q_index2] * (self.a_list[q_index1] + self.a_dagger_list[q_index1]) * (self.a_list[q_index2] + self.a_dagger_list[q_index2])
+                    if self.g_freq:
+                        H_inter += self.g[q_index1][q_index2] * np.sqrt(self.w[q_index1] * self.w[q_index2]) * (self.a_list[q_index1] + self.a_dagger_list[q_index1]) * (self.a_list[q_index2] + self.a_dagger_list[q_index2])
+                    else:
+                        H_inter += self.g[q_index1][q_index2] * (self.a_list[q_index1] + self.a_dagger_list[q_index1]) * (self.a_list[q_index2] + self.a_dagger_list[q_index2])
         return H_inter
 
     def get_state_index(self, n, freq_threshold = 1e-6, deg_threshold = 5e-3, deg_round = 7):
