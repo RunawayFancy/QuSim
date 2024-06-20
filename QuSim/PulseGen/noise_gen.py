@@ -23,6 +23,7 @@ def noise_gen(tstart, tstop, tstep, config):
     t = np.linspace(tstart, tstop, tstep)
     dt = t[1] - t[0]
     noise = np.zeros_like(t)
+    noise_base = np.ones_like(t)
 
     switch = config.get('switch', 'off')    
     if isinstance(switch, str):
@@ -33,18 +34,24 @@ def noise_gen(tstart, tstop, tstep, config):
     
     # Check for the type of noise and generate accordingly
     noise_type = config.get('type', '').lower()
+    tau0 = config.get('tau0', tstop)
+    noise_segments = segmentize(t, tau0, noise_base)
     
     if noise_type == 'gaussian':
         mean = config.get('mean', 0)
         std = config.get('std', 1)
-        noise = np.random.normal(mean, std, t.shape)
-        
+        for i in range(len(noise_segments)):
+            noise_segments[i] *= np.random.normal(mean, std)
+        noise = np.concatenate(noise_segments)
+
     elif noise_type == 'white':
         """
         White noise is Gaussian noise with a flat spectral density
         """ 
         std = config.get('std', 1)
-        noise = np.random.normal(0, std, t.shape)
+        for i in range(len(noise_segments)):
+            noise_segments[i] *= np.random.normal(0, std)
+        noise = np.concatenate(noise_segments)
         
     elif noise_type == 'rt':
         """
@@ -71,14 +78,18 @@ def noise_gen(tstart, tstop, tstep, config):
         V_noise_rms = np.sqrt(4 * kB * temperature * resistance)
         
         # Since Johnson noise is white, we model it as Gaussian noise with a standard deviation of V_noise_rms
-        noise = np.random.normal(0, V_noise_rms, t.shape)
+        for i in range(len(noise_segments)):
+            noise_segments[i] *= np.random.normal(0, V_noise_rms)
+        noise = np.concatenate(noise_segments)
 
     elif noise_type == '1/f':
         alpha = config.get('alpha', 1.0)  # Exponent in the 1/f^alpha relationship
         scale = config.get('scale', 1.0)  # Scale to control the noise amplitude
 
         # Create white noise as a base
-        white_noise = np.random.normal(0, 1, t.shape)
+        for i in range(len(noise_segments)):
+            noise_segments[i] *= np.random.normal(0, 1)
+        white_noise = np.concatenate(noise_segments)
 
         # Perform FFT
         f_transform = fft.fft(white_noise)
@@ -128,6 +139,23 @@ def noise_gen(tstart, tstop, tstep, config):
     
     return noise
 
+def segmentize(t, tau0, noise):
+    segments = []
+    start_idx = 0
+
+    while start_idx < len(t):
+        # Find the end index for the current segment
+        end_idx = start_idx
+        while end_idx < len(t) and (t[end_idx] - t[start_idx]) <= tau0:
+            end_idx += 1
+        
+        # Add the segment to the list
+        segments.append(noise[start_idx:end_idx])
+        
+        # Move to the next starting index
+        start_idx = end_idx
+    
+    return segments
 
 # Todo list:
 # 1. Add multi-level rt noise

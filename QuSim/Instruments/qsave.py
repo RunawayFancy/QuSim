@@ -68,12 +68,12 @@ class qsave:
 
     @property
     def undo(self):
-        response = input("Do you want to undo the process? [y/n]: ")
+        count, filename = pickle.load(open(self.path+"counts.pkl", "rb"))
+        # print("Undoing the process...")
+        fpath = self.path+filename
+        response = input(f"Do you want to undo the {filename}? [y/n]: ")
         # Check the user's input and respond
         if response.lower() == 'y':
-            count, filename = pickle.load(open(self.path+"counts.pkl", "rb"))
-            # print("Undoing the process...")
-            fpath = self.path+filename
             try:
                 os.remove(fpath)
                 print(f"Successfully undo {filename}")
@@ -86,11 +86,12 @@ class qsave:
                 print(f"An error occurred: {e}")
             if count > 0:
                 count -= 1
-            pickle.dump([count, filename], open("counts.pkl", "wb"))
+
         elif response.lower() == 'n':
             print("No action taken.")
         else:
             print("Invalid input. Please enter 'y' or 'n'.")
+        pickle.dump([count, filename], open("counts.pkl", "wb"))
 
     def save(self, filename: str ,data=None, scan=None):
         count, _ = pickle.load(open(self.path + "counts.pkl", "rb"))
