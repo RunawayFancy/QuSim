@@ -1,6 +1,6 @@
 # QuSim, a transmon system simulator
 
-<img src="QuSim_logo.png" alt="Alt text" width="330" height="300">
+<img src="https://github.com/RunawayFancy/QuSim/blob/main/QuSim_logo.png" alt="Alt text" width="330" height="300">
 
 ## Table of Contents
 
