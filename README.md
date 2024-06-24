@@ -13,6 +13,8 @@ A simulator aim at simulating and solving Transmon based qubit-coupler-resonator
 
 This program is directed by Dr. Fei Yan, BAQIS. The original code structe is adoppted from Mr. Pan Shi, Wuhan University & BAQIS, and contributed by Mr. Jiheng Duan and Dr. Ruixia Wang, and Dr. Zhen Chen.
 
+Look up the PyPI page: [https://pypi.org/project/qusim/](https://pypi.org/project/qusim/)
+
 ## User_Guide <a name = "user_guide"></a>
 
 ### Install (use pip)
