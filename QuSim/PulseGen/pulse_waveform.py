@@ -4,7 +4,7 @@
 """
 import numpy as np
 import qusim.Instruments.tools as tools
-from qusim.PulseGen.pulse_shape import pulse_shape_dic
+from qusim.PulseGen.pulse_shape import PULSE_SHAPE_SET
 from qusim.PulseGen.noise_gen import noise_gen
 import copy
 
@@ -34,7 +34,7 @@ class pulse_lib:
     def get_pulse(self, simulation_option):
         tlist = np.linspace(0, simulation_option["simulation_time"], simulation_option["simulation_step"])
         delta_t = tlist[1] - tlist[0]
-        pulse_shape = pulse_shape_dic[self.pulse_shape]
+        pulse_shape = PULSE_SHAPE_SET[self.pulse_shape]
         drive_pulse = pulse_shape(tlist, self.pulse)
         if drive_pulse is None:
             raise ValueError("Invalid pulse shape: pulse_index = " + self.pulse_index + ', pulse_shape = ' + self.pulse_shape)
@@ -87,9 +87,6 @@ class pulse_lib:
             drag_delta = self.pulse['DRAG_delta']
         except KeyError:
             raise ValueError("Missing DRAG delta: pulse_index = " + self.pulse_index + ', pulse_shape = ' + self.pulse_shape)
-        
-        # drag_scale = self.pulse['DRAG_scale']
-        # drag_delta = self.pulse['DRAG_delta']
 
         if isinstance(drag_scale, list):
             if isinstance(drag_delta, list):
@@ -124,74 +121,6 @@ class pulse_lib:
         pulse = copy.deepcopy(self.pulse)
         pulse["amplitude"] = pulse["offset"]
         tlist = np.linspace(0, simulation_option["simulation_time"], simulation_option["simulation_step"])
-        pulse_shape = pulse_shape_dic["square"]
+        pulse_shape = PULSE_SHAPE_SET["square"]
         offset_pulse = pulse_shape(tlist, pulse)
         return np.real(offset_pulse)
-    # def get_pulse_old(self):
-    #     if self.pulse_type == "XY":
-    #         pulse_shape_mapping = {
-    #             "cos": self.cos_waveform
-    #         }
-    #     elif self.pulse_type == 'Z':
-    #         pulse_shape_mapping = {
-    #             "sin": self.sin_waveform,
-    #             "cosh": self.cosh_waveform
-    #         }
-    #     else: ValueError("Invalid pulse type: pulse_index = " + self.pulse_index + ', pulse_shape = ' + self.pulse_shape)
-    #     drive_pulse = pulse_shape_mapping.get(self.pulse_shape)
-    #     if drive_pulse is None:
-    #         raise ValueError("Invalid pulse shape: pulse_index = " + self.pulse_index + ', pulse_shape = ' + self.pulse_shape)
-    #     return drive_pulse
-
-    # def DRAG(self):
-    #     try:
-    #         self.pulse['DRAG_scale']
-    #     except KeyError:
-    #         do_drag = 0
-    #     if do_drag:
-    #         def DRAG_waveform(t_relative, t_laggy): return - self.ampli/2 * np.cos(self.freq * np.pi * 2 * t_relative + self.phase + np.pi/2) * np.pi * self.DRAG_param * np.sin(np.pi * (t_relative + t_laggy)/self.t_rising)
-    #     else:
-    #         def DRAG_waveform(t_relative, t_laggy): return 0
-    #     return DRAG_waveform
-    
-    # def cos_waveform(self, t, args):
-    #     t_relative = t - self.t_delay
-    #     if t_relative < 0: 
-    #         return 0
-    #     if 0 <= t_relative <= self.t_rising:
-    #         return self.ampli/2 * np.cos(self.freq * np.pi * 2 * t_relative + self.phase)* (1 - np.cos(np.pi * t_relative / self.t_rising)) + self.DRAG_waveform(t_relative, 0)
-    #     if self.t_rising < t_relative < self.t_g - self.t_rising:
-    #         return self.ampli * np.cos(self.freq * np.pi *  2 * t_relative)
-    #     if self.t_g - self.t_rising <= t_relative  <= self.t_g:
-    #         return self.ampli/2 * np.cos(self.freq * np.pi * 2 * t_relative + self.phase)* (1 - np.cos(np.pi * ( t_relative - self.t_g + 2 * self.t_rising)/self.t_rising)) + self.DRAG_waveform(t_relative, - self.t_g + 2 * self.t_rising)
-    #     if self.t_g < t_relative: 
-    #         return 0
-        
-    # def sin_waveform(self, t, args):
-    #     t_relative = t - self.t_delay
-    #     if t_relative < 0:
-    #         return 0
-    #     if 0 <= t_relative <= self.t_rising:
-    #         return self.ampli * np.sin(np.pi/2 * t_relative/self.t_rising)
-    #     if self.t_rising < t_relative <= self.t_g - self.t_rising:
-    #         return self.ampli
-    #     if self.t_g - self.t_rising <= t_relative <= self.t_g:
-    #         return self.ampli * np.sin(np.pi/2 * (t_relative - self.t_g + 2 * self.t_rising)/self.t_rising)
-    #     if self.t_g < t_relative:
-    #         return 0
-    
-    # def cosh_waveform(self, t, args):
-    #     t_relative = t - self.t_delay
-    #     zero1, zero2 = np.log(2-np.sqrt(3)), np.log(2+np.sqrt(3))
-    #     if t_relative < 0:
-    #         return 0
-    #     if 0 <= t_relative <= self.t_rising:
-    #         x = zero1 * (t_relative/self.t_rising - 1)
-    #         return self.ampli * ( - np.cosh(x) + 2)
-    #     if self.t_rising < t_relative < self.t_g - self.t_rising:
-    #         return self.ampli
-    #     if self.t_g - self.t_rising <= t_relative <= self.t_g:
-    #         x = zero2 * (t_relative - self.t_g + self.t_rising)/self.t_rising
-    #         return self.ampli * ( - np.cosh(x) + 2)
-    #     if self.t_g < t_relative:
-    #         return 0

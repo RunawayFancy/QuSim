@@ -33,7 +33,7 @@ def hyper(tlist, pulse):
         return pulse['amplitude'] * edges.hyper_edge(tlist, pulse['t_delay'], pulse['t_width'], pulse['t_plateau'], pulse['epsilon'])
     else: raise ValueError("Missing variable epsilon: pulse_index = " + str(pulse['pulse_index']))
 
-pulse_shape_dic = {
+PULSE_SHAPE_SET = {
     'square': square, # Square pulse
     'cosine': cosine, # Cosine
     'hcosine': hcosine, # Half cosine
@@ -41,3 +41,5 @@ pulse_shape_dic = {
     'tanh': tanh,
     'hyper': hyper # Hyperbolic cosh share, with control parameter \epsilon
 }
+
+PULSE_SHAPE = PULSE_SHAPE_SET.keys()
