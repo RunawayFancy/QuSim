@@ -137,7 +137,7 @@ def plot_zz_sweep(x_list:list, y_list:list, zz_list:list, x_label:str, y_label:s
     plt.show()
     return 0
 
-def plot_Elevel_dynamics(w_scan_space, energy_level_list, num_to_plot, label:str, xrange = [], yrange = []):
+def plot_Elevel_dynamics(w_scan_space, energy_level_list, num_to_plot, xlabel:str, xrange = [], yrange = [], legend=[]):
     if isinstance(num_to_plot, int):
         plot_list = range(num_to_plot)
     if isinstance(num_to_plot, list):
@@ -148,12 +148,31 @@ def plot_Elevel_dynamics(w_scan_space, energy_level_list, num_to_plot, label:str
                 plot_list = num_to_plot
         else:
             plot_list = num_to_plot
-    for j in plot_list:
-        plt.plot(w_scan_space, [v[j] for v in energy_level_list])
+    label_list,label_list_trg = get_label_list(num_to_plot, legend)
+    for ii,j in enumerate(plot_list):
+        plt.plot(w_scan_space, [v[j] for v in energy_level_list], label=f'{label_list[ii]}')
     if len(xrange) > 1: plt.xlim(xrange)
     if len(yrange) > 1: plt.ylim(yrange)
-    plt.xlabel('${}$/GHz'.format(label))
+    plt.xlabel('${}$/GHz'.format(xlabel))
     plt.ylabel('Energy (GHz)')
     plt.title("Energy level")
+    if label_list_trg:
+        plt.legend()
     plt.show()
     return 0
+
+def get_label_list(num_to_plot, legend):
+    
+    label_list_trg = True
+    if isinstance(num_to_plot, int):
+        label_list = range(num_to_plot)
+    if isinstance(num_to_plot, list):
+        if len(legend)==len(num_to_plot):
+            label_list = legend
+        else:
+            print('Miss matching between num_to_plot and lengend')
+            num_to_plot = range(len(num_to_plot))
+            label_list = [i for i in range(num_to_plot)]
+    if len(legend)==0:
+        label_list_trg = False
+    return label_list,label_list_trg

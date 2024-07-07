@@ -95,7 +95,10 @@ class qsave:
 
     def save(self, filename: str ,data=None, scan=None):
         count, _ = pickle.load(open(self.path + "counts.pkl", "rb"))
-        filename = filename + f'_{count}.pkl'
+        if filename.endswith('.pkl'):
+            pass
+        else:
+            filename = filename + f'_{count}.pkl'
         # scan save, need a formate scan dict.
         if scan is not None:
             exit(0)
@@ -116,10 +119,23 @@ class qsave:
         print("Selected files:", filenames)
         return filenames  # Return the list of filenames for further use
     
-    @property
-    def load(self):
-        filenames = self.sfile
+    def load(self, *filenames):
+        print(filenames)
+        if not filenames:
+            filenames = self.sfile
+        else:
+            filenames = list(filenames)
+            filenames = [fn if fn.endswith('.pkl') else fn + '.pkl' for fn in filenames]
         data = []
         for fn in filenames:
-            data.append(pickle.load(open(self.path + fn, 'rb')))
+            full_path = os.path.join(self.path, fn)
+            try:
+                with open(full_path, 'rb') as f:
+                    data.append(pickle.load(f))
+                print(f'Successfully loaded {full_path}')
+            except FileNotFoundError:
+                print(f"The file {full_path} does not exist.")
+            except Exception as e:
+                print(f"An error occurred while loading {full_path}: {e}")
+        
         return data
