@@ -62,7 +62,7 @@ def grad(sh):
   if(len(sh) <=1) :return 0*sh   ; 
   else : return np.gradient(sh) ; 
 
-class swap_avoid_crossing:
+class SwapAvoidCrossing:
     
     def __init__(self, energy_level, w_scan, threshold):
         self.energy_level = np.array(energy_level)

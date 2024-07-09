@@ -6,7 +6,7 @@ import os
 import pickle
 from tkinter import Tk, filedialog
 
-class qsave:
+class QSave:
 
     def __init__(self, path):
         self.path = path
@@ -46,7 +46,7 @@ class qsave:
             counts = pickle.load(open(self.path+'counts.pkl', 'rb'))
             print(f"Current counts.pickle exist, with value: {counts}")
         except FileNotFoundError:
-            print(f"Current counts.pickle missing, please initial a new one using `qsave.init`")
+            print(f"Current counts.pickle missing, please initial a new one using `QSave.init`")
 
     @property
     def delete(self):

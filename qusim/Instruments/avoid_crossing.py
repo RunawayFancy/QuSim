@@ -14,7 +14,7 @@ def find_union(*lists):
     intersection_list = list(intersection_set)
     return intersection_list
 
-class swap_avoid_crossing:
+class SwapAvoidCrossing:
     
     def __init__(self, energy_level, w_scan, threshold):
         self.energy_level = np.array(energy_level)
@@ -87,7 +87,7 @@ class swap_avoid_crossing:
         return np.array(my_list)
     
 
-# class swap_avoid_crossing_old:
+# class SwapAvoidCrossing_old:
 #     def __init__(self, energy_level_list, w_scan, threshold):
 #         self.energy_level = np.array(energy_level_list)
 #         self.energy_level_T = self.energy_level.T

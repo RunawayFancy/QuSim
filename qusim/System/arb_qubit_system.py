@@ -26,7 +26,7 @@ def hermitian_conjugate(matrix):
 def cal_tensor(mylist):
         return tensor(*mylist)
 
-class arb_qubit_system:
+class ArbQubitSys:
     """
     A class of a multiple qubit interacting system
     """
@@ -497,8 +497,8 @@ class arb_qubit_system:
             if swith == "off":
                 # print("2")
                 # pulse["amplitude"] *= 2 * np.pi
-                pulse_lib_class = pw.pulse_lib(pulse)
-                XY_pulse = pulse_lib_class.get_pulse(simulation_option)
+                PulseClass_class = pw.PulseClass(pulse)
+                XY_pulse = PulseClass_class.get_pulse(simulation_option)
                 # pulse["amplitude"] /= 2 * np.pi
 
             
@@ -535,8 +535,8 @@ class arb_qubit_system:
         if isinstance(q_index, int):
             # pulse["amplitude"] *= 2 * np.pi
             # Get flux pulse
-            pulse_lib_class = pw.pulse_lib(pulse)
-            flux_pulse = pulse_lib_class.get_pulse(simulation_option)
+            PulseClass_class = pw.PulseClass(pulse)
+            flux_pulse = PulseClass_class.get_pulse(simulation_option)
             # pulse["amplitude"] /= 2 * np.pi
 
             # Get self bias Hamiltonian
@@ -555,8 +555,8 @@ class arb_qubit_system:
         """
         q_index = pulse["q_index"]
         if isinstance(q_index, list):
-            pulse_lib_class = pw.pulse_lib(pulse)
-            bias_pulse = pulse_lib_class.get_pulse(simulation_option)
+            PulseClass_class = pw.PulseClass(pulse)
+            bias_pulse = PulseClass_class.get_pulse(simulation_option)
             
         else: ValueError('Invalid qubit index type:'+ pulse['pulse_index']+ ', q_index = ' + pulse['q_index'])
         return [self.get_H_int_bias(q_index), bias_pulse]

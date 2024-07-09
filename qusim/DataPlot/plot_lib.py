@@ -7,15 +7,30 @@ import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
 
-def plot_pulse_sequence(pulse_sequence, simulation_option):
+def plot_pulse_sequence(pulse_sequence: list, simulation_option: dict):
+    """
+    pulse_sequence: list
+        pulse_sequence = [pulse1, pulse2, ..., pulseN]
+
+        pulse: dict
+
+    simulation_option: dict
+        simulation_option = {
+            "simulation_time": float,
+            "simulation_step": int,
+            "initial_state": list,
+        }
+    
+    """
+
     t_list = np.linspace(0, simulation_option ["simulation_time"], 
      simulation_option ["simulation_step"])
     channel_dic = {}
     q_index_list = []
     for pulse in pulse_sequence:
-        pulse_lib = pw.pulse_lib(pulse)
+        PulseClass = pw.PulseClass(pulse)
         pulse_amp = pulse["amplitude"]
-        drive_pulse = pulse_lib.get_pulse(simulation_option)
+        drive_pulse = PulseClass.get_pulse(simulation_option)
         if pulse["q_index"] not in q_index_list:
             q_index_list.append(pulse["q_index"])
         # waveform_y = [drive_pulse(t, None) for t in t_list]  

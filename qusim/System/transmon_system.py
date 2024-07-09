@@ -10,7 +10,7 @@ from qusim.PulseGen.pulse_buffer import merge_pulse_chan
 import qusim.Instruments.tools as tool
 from qusim.Instruments.angle import get_angle
 
-class qubit_system:
+class TransmonSys:
     """
     A class of a multiple qubit (transmon) interacting system
     N: int
@@ -318,9 +318,9 @@ class qubit_system:
         """
         q_index = pulse["q_index"]
         # Get pulse
-        pulse_lib_class = pw.pulse_lib(pulse)
+        PulseClass_class = pw.PulseClass(pulse)
 
-        XY_pulse = pulse_lib_class.get_pulse(simulation_option)
+        XY_pulse = PulseClass_class.get_pulse(simulation_option)
         
         # print([-1j*self.a_dagger_list[q_index] + 1j*self.a_list[q_index], XY_pulse])
 
@@ -345,8 +345,8 @@ class qubit_system:
         """
         q_index = pulse["q_index"]
         # Get flux pulse
-        pulse_lib_class = pw.pulse_lib(pulse)
-        flux_pulse = pulse_lib_class.get_pulse(simulation_option)
+        PulseClass_class = pw.PulseClass(pulse)
+        flux_pulse = PulseClass_class.get_pulse(simulation_option)
 
         return [self.a_dagger_list[q_index] * self.a_list[q_index], flux_pulse]
 

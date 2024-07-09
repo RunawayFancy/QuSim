@@ -15,6 +15,7 @@ def merge_pulse_chan(pulse_buffer_lst: list, pulse: dict, Hd_i: list):
         pulse_buffer_lst[0].append(pulse["type"])
         pulse_buffer_lst[1].append(str(pulse["q_index"]))
         pulse_buffer_lst[2].append(Hd_i)
+        
     return pulse_buffer_lst
 
 

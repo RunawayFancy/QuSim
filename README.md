@@ -41,7 +41,7 @@ Just downloading the entire folder.
 There is also a release.
 
 ### Usage
-> We have two version: the `transmon_system.py` and `arb_qubit_system.py`
+> We have two version: the `transmon_system.py` and `ArbQubitSys.py`
 
 The detailed tutorial are shown in folder `tutorial/~`, including required imports, define a system, what inside a system, scan zz-coupling, scan energy level, driven system dynamics, single qubit gate calibration, and DRAG calibration.
 

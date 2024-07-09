@@ -13,8 +13,7 @@ import copy
 # cosh
 
 
-class pulse_lib:
-
+class PulseClass:
     def __init__(self, pulse):
         self.pulse = pulse
         self.pulse_index = str(pulse['pulse_index'])
@@ -36,6 +35,7 @@ class pulse_lib:
         delta_t = tlist[1] - tlist[0]
         pulse_shape = PULSE_SHAPE_SET[self.pulse_shape]
         drive_pulse = pulse_shape(tlist, self.pulse)
+
         if drive_pulse is None:
             raise ValueError("Invalid pulse shape: pulse_index = " + self.pulse_index + ', pulse_shape = ' + self.pulse_shape)
             
@@ -55,25 +55,28 @@ class pulse_lib:
 
             if 'pulse_detuning' in self.pulse:
                 center = (self.t_width + self.t_plateau)/2 + self.t_delay
-                drive_pulse *= np.exp(1j*2*np.pi*self.pulse['pulse_detuning'] * (tlist - center))
+                drive_pulse *= np.exp(1j * 2*np.pi * self.pulse['pulse_detuning'] * (tlist - center))
 
             # Multiply the carrier part
             carrier = self.carrier(tlist, self.freq, self.phase)
             drive_pulse *= carrier
             drive_pulse = np.real(drive_pulse)
-        else: ValueError("Invalid pulse type: pulse_index = " + self.pulse_index + ', pulse_shape = ' + self.pulse_shape)
+        else: 
+            ValueError("Invalid pulse type: pulse_index = " + self.pulse_index + ', pulse_shape = ' + self.pulse_shape)
         # Add noise
         if self.noise_chan != 0:
             drive_pulse = self.add_noise(np.real(drive_pulse), simulation_option)
         # print(drive_pulse.dtype)
         if 'offset' in self.pulse:
             offset_pulse = self.get_offset(simulation_option)
-            drive_pulse += offset_pulse
+            drive_pulse += offset_pulse 
         return drive_pulse
+
 
     def carrier(self, tlist, freq, phase = 0):
         return np.exp(-1j * (2 * np.pi * freq * tlist + phase))
     
+
     def DRAG(self, drive_pulse, drag_scale, drag_delta, delta_t):
         # if np.abs(drag_delta) > 1: raise ValueError('DRAG delta value is too small = {}'.format(drag_delta))
         return -1j*tools.grad(drive_pulse)/delta_t * drag_scale/(drag_delta * 2 * np.pi) 
@@ -90,7 +93,8 @@ class pulse_lib:
 
         if isinstance(drag_scale, list):
             if isinstance(drag_delta, list):
-                if len(drag_scale) != len(drag_delta): raise ValueError("Miss matching between DRAG scale and delta: pulse_index = " + self.pulse_index + ', pulse_shape = ' + self.pulse_shape)
+                if len(drag_scale) != len(drag_delta): 
+                    raise ValueError("Miss matching between DRAG scale and delta: pulse_index = " + self.pulse_index + ', pulse_shape = ' + self.pulse_shape)
 
                 num_drag = len(drag_scale)
                 drag_scale_list = drag_scale
@@ -98,12 +102,13 @@ class pulse_lib:
             else: 
                 num_drag = len(drag_scale)
                 drag_scale_list = drag_scale
-                drag_delta_list = [drag_delta for j in range(num_drag)]
+                drag_delta_list = [drag_delta for _ in range(num_drag)]
         else:
-            if drag_scale < 0 or drag_scale > 1: raise ValueError("Invalid DRAG scale. pulse_index = " + self.pulse_index + ', pulse_shape = ' + self.pulse_shape)
+            if drag_scale < 0 or drag_scale > 1: 
+                raise ValueError("Invalid DRAG scale. pulse_index = " + self.pulse_index + ', pulse_shape = ' + self.pulse_shape)
             if isinstance(drag_delta, list):
                 num_drag = len(drag_delta)
-                drag_scale_list = [drag_scale for j in range(num_drag)]
+                drag_scale_list = [drag_scale for _ in range(num_drag)]
                 drag_delta_list = drag_delta
             else:
                 num_drag = 1
