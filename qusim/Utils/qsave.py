@@ -7,11 +7,12 @@ import pickle
 from tkinter import Tk, filedialog
 
 class QSave:
-
     def __init__(self, path):
         self.path = path
-        self.init_directory()
+        self.init_directory
+        self.init
 
+    @property
     def init_directory(self):
         if not os.path.exists(self.path):
             try:
@@ -24,6 +25,19 @@ class QSave:
 
     @property
     def init(self):
+        switch = 0
+        try:
+            counts = pickle.load(open(self.path+'counts.pkl', 'rb'))
+            print("Current counts.pickle exist.")
+        except FileNotFoundError:
+            switch = 1
+        if switch == 1:
+            counts = [0, '']
+            pickle.dump(counts, open(self.path+'counts.pkl', 'wb'))
+            print(f'Successfully create counts.pickle file under directory {self.path}')
+
+    @property
+    def reinit(self):
         try:
             counts = pickle.load(open(self.path+'counts.pkl', 'rb'))
             response = input("Current counts.pickle exist, do you want to reinitialize the counts.pkl file? [y/n]: ")
@@ -68,7 +82,7 @@ class QSave:
 
     @property
     def undo(self):
-        count, filename = pickle.load(open(self.path+"counts.pkl", "rb"))
+        count, filename = pickle.load(open(f"{self.path}counts.pkl", "rb"))
         # print("Undoing the process...")
         fpath = self.path+filename
         response = input(f"Do you want to undo the {filename}? [y/n]: ")
@@ -86,15 +100,14 @@ class QSave:
                 print(f"An error occurred: {e}")
             if count > 0:
                 count -= 1
-
         elif response.lower() == 'n':
             print("No action taken.")
         else:
             print("Invalid input. Please enter 'y' or 'n'.")
-        pickle.dump([count, filename], open("counts.pkl", "wb"))
+        pickle.dump([count, filename], open(f"{self.path}counts.pkl", "wb"))
 
     def save(self, filename: str ,data=None, scan=None):
-        count, _ = pickle.load(open(self.path + "counts.pkl", "rb"))
+        count, _ = pickle.load(open(f"{self.path}counts.pkl", "rb"))
         if filename.endswith('.pkl'):
             pass
         else:
@@ -104,9 +117,9 @@ class QSave:
             exit(0)
         # custom data save
         if data is not None:
-            pickle.dump(data, open(self.path+filename, "wb"))
-            pickle.dump([count+1, filename], open(self.path+"counts.pkl", "wb"))
-            print("Save as file "+filename)
+            pickle.dump(data, open(f"{self.path}{filename}", "wb"))
+            pickle.dump([count+1, filename], open(f"{self.path}counts.pkl", "wb"))
+            print(f"Save as file {filename}")
 
     @property
     def sfile(self):
@@ -116,7 +129,7 @@ class QSave:
         filepaths = filedialog.askopenfilenames(initialdir=self.path)
         root.destroy()
         filenames = [os.path.basename(filepath) for filepath in filepaths]
-        print("Selected files:", filenames)
+        print(f"Selected files: {filenames}")
         return filenames  # Return the list of filenames for further use
     
     def load(self, *filenames):
