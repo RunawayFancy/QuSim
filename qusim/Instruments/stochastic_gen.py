@@ -4,6 +4,8 @@
 """
 import numpy as np
 import copy
+from qusim.PulseGen.pulse_config import PulseConfig, PulseShapeFn
+from qusim.PulseGen.simulation_option import SimulationOption
 
 def gen_normal_rand_var(mean, std):
     """
@@ -75,10 +77,10 @@ def find_closest_value_with_index(sorted_array, target):
         return (closest_low, low) if abs(target - closest_low) < abs(target - closest_high) else (closest_high, high)
     
 
-def gen_stochastic_point(simulation_option, t_switching_mean):
-    time_list = np.linspace(0, simulation_option["simulation_time"], simulation_option["simulation_step"])
-    ti = np.copy(time_list[0])
-    t = np.copy(ti)
+def gen_stochastic_point(sim_opts: SimulationOption, t_switching_mean):
+    time_list = sim_opts.tlist
+
+    t = np.copy(time_list[0])
     index = 0
     lenth = len(time_list)
     S = []
@@ -94,10 +96,10 @@ def gen_stochastic_point(simulation_option, t_switching_mean):
         index = np.copy(index_new)
     return S, index_list
 
-def gen_rt_point(simulation_option, p_switch, max_limit = 1000):
-    time_list = np.linspace(0, simulation_option["simulation_time"], simulation_option["simulation_step"])
-    ti = np.copy(time_list[0])
-    t = np.copy(ti)
+def gen_rt_point(sim_opts: SimulationOption, p_switch, max_limit = 1000):
+    time_list = sim_opts.tlist
+
+    t = np.copy(time_list[0])
     index = 0
     lenth = len(time_list)
     S = []
@@ -113,31 +115,31 @@ def gen_rt_point(simulation_option, p_switch, max_limit = 1000):
         index = np.copy(index_new)
     return S, index_list
 
-def gen_pulse_seq(S:list, ilist:list, dist_dic:dict, type:str, shape:str, q_indx:int):
-    pulse_ex = {
-        'pulse_index': 0,
-        'type': type,
-        'pulse_shape': shape,
-        't_delay': 0, # unit in ns
-        't_width': 0, # unit in ns
-        't_plateau': 0, # unit in ns
-        'freq': 0, # unit in GHz; Z pulse does not use it
-        'phase': 0, # unit in rad; Z pulse does not use it
-        'amplitude': 0, # XY: Rabi freq; Z: biased frequency
-        'q_index': q_indx # 0, 1, 2 ...
-    }
-    pulse_sequence = []
+def gen_pulse_seq(S:list, ilist:list, dist_dic:dict, pulse_type:str, pulse_shape:PulseShapeFn, q_index:int) -> list[PulseConfig]:
+    blueprint = PulseConfig(
+        pulse_index=0,
+        pulse_type=pulse_type,
+        pulse_shape=pulse_shape,
+        t_delay=0,
+        t_width=0,
+        t_plateau=0,
+        frequency=0,
+        phase=0,
+        amplitude=0,
+        q_index=q_index
+    )
+    pseq = []
 
     for ii, t_d in enumerate(S):
-        pulse = copy.deepcopy(pulse_ex)
+        pulse = copy.deepcopy(blueprint)
 
-        pulse['pulse_index'] = ii + 1
-        pulse['t_delay'] = t_d
-        pulse['t_width'] = gen_normal_rand_var(dist_dic["t_width_mean"], dist_dic["t_width_std"])
-        pulse['freq'] = gen_normal_rand_var(dist_dic["freq_mean"], dist_dic["freq_std"])
-        pulse['phase'] = gen_normal_rand_var(dist_dic["phase_mean"], dist_dic["phase_std"])
-        pulse['amplitude'] = gen_normal_rand_var(dist_dic["amplitude_mean"], dist_dic["amplitude_std"])
+        pulse.pulse_index = ii + 1
+        pulse.t_delay = t_d
+        pulse.t_width = gen_normal_rand_var(dist_dic["t_width_mean"], dist_dic["t_width_std"])
+        pulse.frequency = gen_normal_rand_var(dist_dic["freq_mean"], dist_dic["freq_std"])
+        pulse.phase = gen_normal_rand_var(dist_dic["phase_mean"], dist_dic["phase_std"])
+        pulse.amplitude = gen_normal_rand_var(dist_dic["amplitude_mean"], dist_dic["amplitude_std"])
+        
+        pseq.append(pulse)
 
-        pulse_sequence.append(pulse)
-
-    return pulse_sequence
+    return pseq

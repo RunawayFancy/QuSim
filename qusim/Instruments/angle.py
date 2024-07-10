@@ -4,12 +4,13 @@
 """
 import numpy as np
 from qutip import isket
+from qusim.PulseGen.simulation_option import SimulationOption
 
 
-def cal_angle(result_list, simulation_option):
+def cal_angle(result_list, sim_opts: SimulationOption):
     angle_list = []
     for ii, res in enumerate(result_list):
-        angle = np.angle(simulation_option["initial_state"][ii].dag() * res.states[-1])[0][0]
+        angle = np.angle(sim_opts.initial_state[ii].dag() * res.states[-1])[0][0]
         angle_list.append(angle)
     return (angle_list[3] - angle_list[2] - angle_list[1] - angle_list[0])
 

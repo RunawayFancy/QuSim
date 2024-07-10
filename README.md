@@ -27,11 +27,20 @@ pip install qusim
 
 You are required to install all these python packages in the system for running this simulator. See `requirements.txt`.
 >* `Python`, version >= 3.10
+>> Installing virtual environment using conda `conda -n env_name python=python_ver -ipython`
 >* `qutip`, version >= 4.6.3
->>* `qutip 4.6.3` is strongly recommanded. As we use `qutip 4.7.5`, the `propagator` solver will crash your terminal.
+<!-- >>* `qutip 4.6.3` is strongly recommanded. As we use `qutip 4.7.5`, the `propagator` solver will crash your terminal. -->
 >>* Nocie that `qutip 4.6.3` requires `scipy 1.10.1` exactly. Otherwise it will raise up error in function `fast_crs_matrix`. (https://stackoverflow.com/questions/76560698/python-3-10-qutip-attributeerror-cant-set-attribute-format)
->* `matplotlib`
->* `pickle`, any version
+>* `matplotlib==3.8.3`
+>* `mpmath==1.3.0`,
+>* `pillow==10.2.0`,
+>* `scipy==1.12.0`,
+>* `sympy==1.12`,
+>* `tqdm==4.66.2`,
+>* `h5py==3.11.0`,
+>* `pyqtgraph==0.13.7`,
+>* `PyQt5==5.15.10`,
+>* `vispy==0.14.3`,
 >* `jupyter lab` or `jupyter notebook`, optional
 
 ### Download

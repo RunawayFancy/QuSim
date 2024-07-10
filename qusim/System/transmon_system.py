@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-@author: Pan Shi, Jiheng Duan
+@author: Pan Shi, Meng Wang, Jiheng Duan
 """
+from typing import List, Iterable
 import numpy as np
 import copy
 from qutip import *
-import qusim.PulseGen.pulse_waveform as pw
+from qusim.PulseGen.pulse_config import PulseConfig
 from qusim.PulseGen.pulse_buffer import merge_pulse_chan
+from qusim.PulseGen.simulation_option import SimulationOption
 import qusim.Instruments.tools as tool
 from qusim.Instruments.angle import get_angle
 
@@ -220,156 +222,94 @@ class TransmonSys:
 
         return co_list
     
-    def system_dynamics_mesolve(self, simulation_option, pulse_sequence, option = Options(rtol=1e-8)):
+    def system_dynamics_mesolve(self, pseq: List[PulseConfig], sim_opts: SimulationOption, option = Options(rtol=1e-8)):
         """
         A method to convert your defined system into the master equation solver in qutip.
         
         """
-        state_list = simulation_option["initial_state"]
+        state_list = sim_opts.initial_state
         result_list, angle_list = [], []
         for state in state_list:
-            H_d = []; pulse_buffer_list = [[] for ii in range(3)]
+            H_d = []; pulse_buffer_list = [[] for _ in range(3)]
             H_d.append(self.H)
-            for pulse in pulse_sequence:
-                pulse_buffer_list = merge_pulse_chan(pulse_buffer_list, pulse, self.send_pulse(pulse, simulation_option))
+            for pulse in pseq:
+                pulse_buffer_list = merge_pulse_chan(pulse_buffer_list, pulse, self.send_pulse(pulse, sim_opts))
             for Hd_i in pulse_buffer_list[2]:
                 H_d.append(Hd_i)
-            # H_d = []
-            # H_d.append(self.H)
-            # for pulse in pulse_sequence:
-            #     H_d.append(self.send_pulse(pulse, simulation_option))
             initial_state = copy.deepcopy(state)
-            simulation_step = simulation_option["simulation_step"]
-            simulation_time = simulation_option["simulation_time"]
             # Set up master equation solver
-            result, angle = self.master_eq_solver(H_d, simulation_time, simulation_step, initial_state, option)
+            result, angle = self.master_eq_solver(H_d, sim_opts.tlist, initial_state, option)
             result_list.append(result)
             angle_list.append(angle)
+            
         return result_list, angle_list
     
-    def master_eq_solver(self, H_d, t_simulation, simulation_step, initial_state, option = Options(rtol=1e-8)):
-        tlist = np.linspace(0, t_simulation, simulation_step)
+    def master_eq_solver(self, H_d, tlist: np.ndarray, initial_state: List[Qobj], option = Options(rtol=1e-8)):
         result = mesolve(H_d, initial_state, tlist, c_ops = self.co_list(), options = option) 
         angle = get_angle(initial_state, result)
+        
         return result, angle
     
-    def system_dynamics_propagator(self, simulation_option, pulse_sequence, option = Options(rtol=1e-8)):
-        H_d = []; pulse_buffer_list = [[] for ii in range(3)]
+    def system_dynamics_propagator(self, pseq: List[PulseConfig], sim_opts: SimulationOption, option = Options(rtol=1e-8)):
+        H_d = []; pulse_buffer_list = [[] for _ in range(3)]
         H_d.append(self.H)
-        for pulse in pulse_sequence:
-            pulse_buffer_list = merge_pulse_chan(pulse_buffer_list, pulse, self.send_pulse(pulse, simulation_option))
+        for pulse in pseq:
+            pulse_buffer_list = merge_pulse_chan(pulse_buffer_list, pulse, self.send_pulse(pulse, sim_opts))
         for Hd_i in pulse_buffer_list[2]:
             H_d.append(Hd_i)
-        # H_d = []
-        # H_d.append(self.H)
-        # for pulse in pulse_sequence:
-        #     H_d.append(self.send_pulse(pulse, simulation_option))
-        simulation_step = simulation_option["simulation_step"]
-        simulation_time = simulation_option["simulation_time"]
-        tlist=np.linspace(0, simulation_time, simulation_step)
-        # tlist = simulation_time
-        result = propagator(H_d, tlist, self.co_list(), {} , option, progress_bar=True)
+        result = propagator(H_d, sim_opts.tlist, self.co_list(), {} , option, progress_bar=True)
+        
         return result
     
-    def send_pulse(self, pulse, simulation_option):
+    def send_pulse(self, pulse: PulseConfig, sim_opts: SimulationOption):
         """
         Construct dynamical component of the Hamiltonian H_d
         """
-        if pulse['q_index'] > self.num_q - 1: ValueError('Invalid qubit index:'+ pulse['pulse_index']+ ', q_index = ' + pulse['q_index'])
-        # print('send_pulse()_1, amp = {}'.format(pulse['amplitude']))
-        pulse["amplitude"] *= 2 * np.pi
-        if pulse["type"] == "XY":
-            H_drive = self.H_XY_drive(pulse, simulation_option)
-        elif pulse["type"] == "Z":
-            H_drive = self.H_Z_bias(pulse, simulation_option)
+        assert pulse.qindex <= self.num_q -1
+        
+        if pulse.pulse_type == "XY":
+            H_drive = self.H_XY_drive(pulse, sim_opts)
+        elif pulse.pulse_type == "Z":
+            H_drive = self.H_Z_bias(pulse, sim_opts)
         else:
-            raise ValueError("Invalid pulse type:"+ pulse['pulse_index']+ ', q_index = ' + pulse['pulse_index']+ ', type = '  + pulse["type"])
-        # print('send_pulse()_2, amp = {}'.format(pulse['amplitude']))
-        pulse["amplitude"] /= 2 * np.pi
-        # print('send_pulse()_3, amp = {}'.format(pulse['amplitude']))
+            raise ValueError(f"Invalid pulse type: pulse index {pulse.pulse_index}, qubit index {pulse.qindex}, pulse type {pulse.pulse_type}")
+
         return H_drive
 
-    def H_XY_drive(self, pulse, simulation_option):
+    def H_XY_drive(self, pulse: PulseConfig, sim_opts: SimulationOption):
         """
         Define the Hamiltonian of the system under XY pulse driving
-
-        t_width: float
-            The sum of widths of the rising and lowering edges 
-        t_plateau: float
-            The width of plateau
-        t_delay:
-            The delay of the starting point of the pulse 
-        pulse_shape:
-            The waveform of the envelope
-        ampli: float
-            Amplitude of the XY pulse envelope
-        freq: float
-            Frequency of the XY pulse carrier
-        phase: float
-            Phase of the carrier
-        q_index:
-            The index of qubit that applied pulse to
-
-        ===========================
-
-        More features:
-            - More pulse shape
-            T.B.C.
         """
-        q_index = pulse["q_index"]
         # Get pulse
-        PulseClass_class = pw.PulseClass(pulse)
+        XY_pulse = pulse.get_pulse(sim_opts)
 
-        XY_pulse = PulseClass_class.get_pulse(simulation_option)
-        
-        # print([-1j*self.a_dagger_list[q_index] + 1j*self.a_list[q_index], XY_pulse])
+        return [-1j*self.a_dagger_list[pulse.qindex] + 1j*self.a_list[pulse.qindex], XY_pulse]
 
-        return [-1j*self.a_dagger_list[q_index] + 1j*self.a_list[q_index], XY_pulse]
-
-    def H_Z_bias(self, pulse, simulation_option):
+    def H_Z_bias(self, pulse: PulseConfig, sim_opts: SimulationOption):
         """
         Define the Hamiltonian of the system under Z pulse biasing
-
-        t_width: float
-            The sum of widths of the rising and lowering edges 
-        t_plateau: float
-            The width of plateau
-        t_delay:
-            The delay of the starting point of the pulse 
-        pulse_shape:
-            The waveform of the envelope
-        ampli: float
-            Amplitude of the Z pulse
-        q_index:
-            The index of qubit that applied pulse to
         """
-        q_index = pulse["q_index"]
-        # Get flux pulse
-        PulseClass_class = pw.PulseClass(pulse)
-        flux_pulse = PulseClass_class.get_pulse(simulation_option)
+        flux_pulse = pulse.get_pulse(sim_opts)
 
-        return [self.a_dagger_list[q_index] * self.a_list[q_index], flux_pulse]
+        return [self.a_dagger_list[pulse.qindex] * self.a_list[pulse.qindex], flux_pulse]
 
-    def get_data_list(self, result_list, simulation_option, state_list):
-        simulation_step = simulation_option["simulation_step"]
+    def get_data_list(self, result_list, sim_opts: SimulationOption, state_list):
         data_list = []
-        index = 0
         for state in state_list:
             data_list_dummy = []
-            for ii in range(0, simulation_step):
+            for ii in range(0, sim_opts.simulation_point):
                 data_list_dummy.append(np.abs(((result_list.states[ii]).dag()*state)[0][0][0])**2)
             data_list.append(data_list_dummy)
-            index += 1
+
         return data_list
     
-    def get_data_list_density(self, result, simulation_option, state_list):
-        simulation_step = simulation_option["simulation_step"]
+    def get_data_list_density(self, result, sim_opts: SimulationOption, state_list: List[Qobj]):
         data_list = []
-        index = 0
-        for state in state_list:
+
+        for index, state in enumerate(state_list):
             data_list_dummy = []
-            for ii in range(0, simulation_step):
+            for ii in range(0, sim_opts.simulation_point):
                 data_list_dummy.append(((result.states[ii] * result[index].states[ii].dag()) * (state * state.dag())).tr())
             data_list.append(data_list_dummy)
-            index += 1
+
         return data_list

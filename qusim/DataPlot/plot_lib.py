@@ -2,51 +2,33 @@
 """
 @author: Jiheng Duan
 """
-import qusim.PulseGen.pulse_waveform as pw
+
+from qusim.PulseGen.pulse_config import PulseConfig
+from qusim.PulseGen.simulation_option import SimulationOption
 import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
+from collections import defaultdict as ddict
 
-def plot_pulse_sequence(pulse_sequence: list, simulation_option: dict):
-    """
-    pulse_sequence: list
-        pulse_sequence = [pulse1, pulse2, ..., pulseN]
-
-        pulse: dict
-
-    simulation_option: dict
-        simulation_option = {
-            "simulation_time": float,
-            "simulation_step": int,
-            "initial_state": list,
-        }
+def plot_pulse_sequence(pseq: list[PulseConfig], sim_opts: SimulationOption):
     
-    """
-
-    t_list = np.linspace(0, simulation_option ["simulation_time"], 
-     simulation_option ["simulation_step"])
-    channel_dic = {}
+    tlist = sim_opts.tlist    
+    channel_dic = ddict(list)
     q_index_list = []
-    for pulse in pulse_sequence:
-        PulseClass = pw.PulseClass(pulse)
-        pulse_amp = pulse["amplitude"]
-        drive_pulse = PulseClass.get_pulse(simulation_option)
-        if pulse["q_index"] not in q_index_list:
-            q_index_list.append(pulse["q_index"])
-        # waveform_y = [drive_pulse(t, None) for t in t_list]  
-        waveform_y = drive_pulse
+
+    for pulse in pseq:
+        waveform_y = pulse.get_pulse(sim_opts)
+        if pulse.qindex not in q_index_list:
+            q_index_list.append(pulse.qindex)
         
         # Rescale the pulses by factor 1/1.2
         # for i in range(len(t_list)):
         #     if waveform_y[i] != None and pulse_amp != 0:
         #         waveform_y[i] /= np.abs(pulse_amp)
 
-        channel_name = "{}{}".format(pulse["type"], pulse["q_index"])
-        if channel_name in channel_dic:
-            channel_dic[channel_name].append(waveform_y)
-            # channel_dic[channel_name] = np.array(channel_dic[channel_name]) + np.array(waveform_y)
-        else:
-            channel_dic[channel_name] = [waveform_y]
+        channel_name = f"{pulse.pulse_type}{pulse.qindex}"
+        channel_dic[channel_name].append(waveform_y)
+
     # print(type(channel_dic['XY0']))
 
     # Define a custom sorting function to sort the channel names as desired
@@ -72,46 +54,32 @@ def plot_pulse_sequence(pulse_sequence: list, simulation_option: dict):
 
     # Iterate over the channels and plot them vertically separated
     for i, channel_name in enumerate(sorted_channels):
-        try:
-            iterator = iter(channel_dic[channel_name])
-        except TypeError:
-            pass
-        else:
-            index = 1
-            for waveform in channel_dic[channel_name]:
-            # waveform = channel_dic[channel_name]
-                vertical_offset = i * vertical_spacing
-                waveform_offset = waveform + vertical_offset
-                for jj in range(len(waveform_offset)):
-                    if waveform_offset[jj] == vertical_offset: waveform_offset[jj] = None
-                ax1.plot(t_list, waveform_offset, label=channel_name + str(index))
-                index += 1
+        index = 1
+        for waveform in channel_dic[channel_name]:
+            vertical_offset = i * vertical_spacing
+            waveform_offset = waveform + vertical_offset
+            for _j, _off in enumerate(waveform_offset):
+                if _off == vertical_offset: 
+                    waveform_offset[_j] = None
+            
+            ax1.plot(tlist, waveform_offset, label=f'{channel_name}{index}')
+            index += 1
 
     # Set the y-axis tick labels and limits for channel plot
     ax1.set_yticks(np.arange(len(channel_dic)) * vertical_spacing)
     ax1.set_yticklabels(sorted_channels)
     ax1.set_ylim(-vertical_spacing, len(channel_dic) * vertical_spacing)
-    ax1.set_xlim(0, simulation_option["simulation_time"])
-    # Add legend and labels for channel plot
-    # ax1.legend(loc="upper right")
-    ax1.set_xlabel("Time/ns")
-    ax1.set_ylabel("Channel")
-    
+    ax1.set_xlim(0, sim_opts.simulation_time)
+    ax1.set_xlabel("Time (ns)")
+    ax1.set_ylabel("Channel name")
     # Create a twin axes for the pulse amplitude
     ax2 = ax1.twinx()
     ax2.set_ylim(-vertical_spacing, len(channel_dic) * vertical_spacing)
-    
-    # Add label for the pulse amplitude axis
-    ax2.set_ylabel("Normalized Pulse Amplitude")
-
-    # Show the plot
+    ax2.set_ylabel("Pulse Amplitude (a.u.)")
     plt.grid()
-    plt.show()
+    fig.show()
 
-    return 0
-
-
-def plot_population_evolution(_system, result_list, simulation_option, interested_state, interested_state_label, initial_state_label):
+def plot_population_evolution(_system, result_list, sim_opts: SimulationOption, interested_state, interested_state_label, initial_state_label):
     num_subplots = len(result_list)
     # Calculate the number of rows and columns for the subplot layout
     num_rows = int(num_subplots ** 0.5)
@@ -119,7 +87,8 @@ def plot_population_evolution(_system, result_list, simulation_option, intereste
     # Create subplots
     fig, axs = plt.subplots(num_rows, num_cols, figsize=(10, 8))
     # Flatten the axs array if it's 1D (for the case when there's only one subplot)
-    time_list = np.linspace(0,simulation_option["simulation_time"],simulation_option["simulation_step"])
+    time_list = sim_opts.tlist
+
     if num_subplots in [2,3]:
         axs = np.array([axs])
     if num_subplots == 1:
@@ -128,18 +97,17 @@ def plot_population_evolution(_system, result_list, simulation_option, intereste
         row_idx = index // num_cols
         col_idx = index % num_cols
         label_list = interested_state_label[index]
-        data_list = _system.get_data_list(result, simulation_option, interested_state[index])
+        data_list = _system.get_data_list(result, sim_opts, interested_state[index])
         for jndex in range(len(data_list)):
             axs[row_idx, col_idx].plot(time_list, data_list[jndex], label = label_list[jndex])
-            axs[row_idx, col_idx].set_xlabel("Time/ns")
+            axs[row_idx, col_idx].set_xlabel("Time (ns)")
             axs[row_idx, col_idx].set_ylabel("Population")
             axs[row_idx, col_idx].legend()
-        axs[row_idx, col_idx].set_title("Initial state: {}".format(initial_state_label[index]))
+        axs[row_idx, col_idx].set_title(f"Initial state: {initial_state_label[index]}")
     # Adjust layout
     plt.tight_layout()
     # Show the plot
-    plt.show()
-    return 0
+    fig.show()
 
 def plot_zz_sweep(x_list:list, y_list:list, zz_list:list, x_label:str, y_label:str):
     nrm1 = matplotlib.colors.LogNorm(1e-6, 1e-1)  
@@ -174,7 +142,6 @@ def plot_Elevel_dynamics(w_scan_space, energy_level_list, num_to_plot, xlabel:st
     if label_list_trg:
         plt.legend()
     plt.show()
-    return 0
 
 def get_label_list(num_to_plot, legend):
     
