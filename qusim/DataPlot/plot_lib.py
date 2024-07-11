@@ -8,6 +8,7 @@ from qusim.PulseGen.simulation_option import SimulationOption
 import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
+from numpy import pi as PI
 from collections import defaultdict as ddict
 
 def plot_pulse_sequence(pseq: list[PulseConfig], sim_opts: SimulationOption):
@@ -17,7 +18,7 @@ def plot_pulse_sequence(pseq: list[PulseConfig], sim_opts: SimulationOption):
     q_index_list = []
 
     for pulse in pseq:
-        waveform_y = pulse.get_pulse(sim_opts)
+        waveform_y = pulse.get_pulse(sim_opts)/2/PI
         if pulse.qindex not in q_index_list:
             q_index_list.append(pulse.qindex)
         
@@ -68,13 +69,13 @@ def plot_pulse_sequence(pseq: list[PulseConfig], sim_opts: SimulationOption):
     # Set the y-axis tick labels and limits for channel plot
     ax1.set_yticks(np.arange(len(channel_dic)) * vertical_spacing)
     ax1.set_yticklabels(sorted_channels)
-    ax1.set_ylim(-vertical_spacing, len(channel_dic) * vertical_spacing)
+    ax1.set_ylim(-vertical_spacing/2, len(channel_dic) * vertical_spacing/2)
     ax1.set_xlim(0, sim_opts.simulation_time)
     ax1.set_xlabel("Time (ns)")
     ax1.set_ylabel("Channel name")
     # Create a twin axes for the pulse amplitude
     ax2 = ax1.twinx()
-    ax2.set_ylim(-vertical_spacing, len(channel_dic) * vertical_spacing)
+    ax2.set_ylim(-vertical_spacing/2, len(channel_dic) * vertical_spacing/2)
     ax2.set_ylabel("Pulse Amplitude (a.u.)")
     plt.grid()
     fig.show()
@@ -85,7 +86,8 @@ def plot_population_evolution(_system, result_list, sim_opts: SimulationOption, 
     num_rows = int(num_subplots ** 0.5)
     num_cols = (num_subplots + num_rows - 1) // num_rows
     # Create subplots
-    fig, axs = plt.subplots(num_rows, num_cols, figsize=(10, 8))
+    fig, axs = plt.subplots(num_rows, num_cols)
+    fig.canvas.manager.set_window_title('Pop. vs. time')
     # Flatten the axs array if it's 1D (for the case when there's only one subplot)
     time_list = sim_opts.tlist
 
@@ -108,6 +110,7 @@ def plot_population_evolution(_system, result_list, sim_opts: SimulationOption, 
     plt.tight_layout()
     # Show the plot
     fig.show()
+    
 
 def plot_zz_sweep(x_list:list, y_list:list, zz_list:list, x_label:str, y_label:str):
     nrm1 = matplotlib.colors.LogNorm(1e-6, 1e-1)  
@@ -118,7 +121,7 @@ def plot_zz_sweep(x_list:list, y_list:list, zz_list:list, x_label:str, y_label:s
     ax1.set_ylabel('${}$/GHz'.format(y_label))
 
     plt.show()
-    return 0
+
 
 def plot_Elevel_dynamics(w_scan_space, energy_level_list, num_to_plot, xlabel:str, xrange = [], yrange = [], legend=[]):
     if isinstance(num_to_plot, int):

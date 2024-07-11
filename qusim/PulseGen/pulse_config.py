@@ -58,7 +58,6 @@ class PulseShapeFn(Enum):
     TANH = tanh
     HYPER = hyper
 
-
 # noise_chan1 = [
 #     {
 #     'type': 'white',

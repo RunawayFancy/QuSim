@@ -5,7 +5,7 @@ from qusim.PulseGen.pulse_config import PulseConfig
 from qusim.PulseGen.simulation_option import SimulationOption
 
 import copy
-import numpy as np
+import numpy as np; from numpy import pi as PI
 import pyqtgraph as pg
 from collections import defaultdict as ddict
 
@@ -46,13 +46,13 @@ def plot_pulse_sequence(pseq: list[PulseConfig], sim_opts: SimulationOption) -> 
     pulse_map = ddict(list)
 
     for pulse in pseq:
-        _waveform = pulse.get_pulse(sim_opts)
+        _waveform = pulse.get_pulse(sim_opts)/2/PI
 
-        _hint = (
-            pulse.qindex,
-            pulse.pulse_type,
-        )
-
+        # _hint = (
+        #     pulse.qindex,
+        #     pulse.pulse_type,
+        # )
+        _hint = f"{pulse.pulse_type}{pulse.qindex}"
         pulse_map[_hint].append(_waveform)
 
     win = pg.GraphicsLayoutWidget(show=True, title="window title here")
