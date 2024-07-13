@@ -9,13 +9,16 @@ from qusim.PulseGen.noise_gen import noise_gen
 from qusim.Instruments.tools import grad
 from qusim.PulseGen.simulation_option import SimulationOption 
 
-
 from collections import namedtuple
 from typing import Literal, Optional, Iterable
 from enum import Enum
+
 from copy import deepcopy
 import numpy as np
 from numpy import pi as PI
+
+import socket
+import pickle
 
 
 def cosine(tlist: np.ndarray, pulse: 'PulseConfig'):
@@ -155,6 +158,30 @@ class PulseConfig():
         self.DRAG_config_list = DRAG_config_list
 
         self.predistortion = predistortion
+    
+    def __str__(self):
+        return \
+            f'name={self.pulse_type}{self.qindex},' \
+            f'pid={self.pulse_index},'              \
+            f'shp={self.pulse_shape.__name__}'
+        
+    def __hash__(self) -> int:
+        return hash(str(self))
+
+    def __eq__(self, other: 'PulseConfig'):
+        return self.qindex == other.qindex and self.pulse_type == other.pulse_type
+
+    def __lt__(self, other: 'PulseConfig'):
+        if self.qindex == other.qindex:
+            return self.pulse_type < other.pulse_type
+
+        return self.qindex < other.qindex
+
+    def send2plot(self, host: str = '127.0.0.1', port: int = 63243) -> None:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((host, port))
+        s.send(pickle.dumps(self))
+        s.close()
         
     def get_pulse(self, sim_opts: SimulationOption) -> np.ndarray:
         """
@@ -263,3 +290,7 @@ __TEST_SIM_OPT2__ = SimulationOption(
     simu_point= 100000,
     simu_time= 10,
 )
+
+if __name__ == '__main__':
+    print(__TEST_PULSE__)
+    
