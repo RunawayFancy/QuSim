@@ -497,7 +497,8 @@ class ArbQubitSys:
          Define the Hamiltonian of the system under INT pulse biasing. The pulse will bias the coupling strength of the interaction strength.
         """
         q_index = pulse.qindex
-        assert isinstance(q_index, list), f'Invalid qubit index type: {pulse.pulse_index}, q_index = {q_index}'
+        assert isinstance(q_index, list), \
+            f'Invalid qubit index type: {pulse.pulse_index}, q_index = {q_index}'
 
         bias_pulse = pulse.get_pulse(sim_opts)
         return [self.get_H_int_bias(q_index), bias_pulse]

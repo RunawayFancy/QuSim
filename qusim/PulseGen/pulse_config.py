@@ -149,7 +149,7 @@ class PulseConfig():
 
         self.phase = phase
         self.frequency = frequency
-        self.amplitude = amplitude * 2*PI
+        self.amplitude = amplitude
         self.offset = offset
         self.noise = noise
         self.epsilon = epsilon
@@ -189,6 +189,7 @@ class PulseConfig():
 
         pulse = Re [waveform * carrier]
         """
+        self.amplitude*=2*PI
         tlist = sim_opts.tlist
         delta_t = sim_opts.simulation_time / sim_opts.simulation_point
         
@@ -218,7 +219,7 @@ class PulseConfig():
         # Add offset
         if self.offset:
             drive_pulse += self.add_offset(tlist)
-
+        self.amplitude/=2*PI
         return drive_pulse
 
     def carrier(self, tlist: np.ndarray) -> np.ndarray:

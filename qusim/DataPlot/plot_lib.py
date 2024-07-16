@@ -58,6 +58,7 @@ def plot_pulse_sequence(pseq: list[PulseConfig], sim_opts: SimulationOption):
         index = 1
         for waveform in channel_dic[channel_name]:
             vertical_offset = i * vertical_spacing
+            print(np.max(waveform))
             waveform_offset = waveform + vertical_offset
             for _j, _off in enumerate(waveform_offset):
                 if _off == vertical_offset: 

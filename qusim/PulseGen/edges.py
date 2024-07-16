@@ -24,7 +24,11 @@ def cosine_edge(tlist, t_delay, _t_width, t_plateau, _a = 0, _b = 1):
     t_width = max(1e-1, _t_width)
     Y = np.zeros(len(tlist) , dtype=np.complex128)
     b, a = max_min(_a, _b)
-    
+
+    # print(np.shape(tlist))
+    # print(np.shape(Y))
+    # print(np.shape(( tlist < t_delay ) * 0))
+
     Y += ( tlist < t_delay ) * 0
     Y += ( (tlist >= t_delay) & (tlist < t_delay + t_width/2) ) * (1 - np.cos(np.pi * (tlist - t_delay) /(t_width/2)))
     # (np.cos(rasing_t(tlist, t_delay, t_width, a, b)) + 1)
