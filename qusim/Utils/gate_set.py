@@ -18,8 +18,14 @@ __DEFAULT_PATH__ = "gate_set/"
 # This might do the same work comparing to smdata...
 
 class SystemInfo:
-    def __init__(self, num_qubit: int) -> None:
+    """
+    t_moment: float
+        Referring to https://quantumai.google/cirq/build/circuits
+    
+    """
+    def __init__(self, num_qubit: int , t_moment: float) -> None:
         self.num_qubit = num_qubit
+        self.t_moment = t_moment
 
 
 class GateSet:
@@ -57,6 +63,15 @@ class GateSet:
 
 
     def add(self, gate_label: str, pseq: list[PulseConfig]):
+        """
+        gate_label: str
+            The gate_label should take the form "GATE_Q1&Q2&Q3". 
+            E.g., a Pi rotation along X axis on qubit 0 (qindex 0) should be: "X90_0";
+            A Pi/2 rotation with phase 34 degree on qubit 2 (qindex 2) should be "R90P34_0"
+            A identity gate on qubit 1 (qindex 1) should be "I_1"
+            A Z rotation gate with angle 34.1 degree on qubit 5 (qindex 6) should be "Z34_5"
+            A CZ gate between qubit 1 (qindex 1) and qubit 2 (qindex 2) is "CZ_1&2"
+        """
         switch = 1
         if gate_label in self.gate_param.keys():
             response = input(f"Gate parameter already in gate_param dict, still overwrite it? [y/n]: ")

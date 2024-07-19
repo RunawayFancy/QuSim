@@ -66,3 +66,12 @@ Our simulator includes the following features:
 * Good data saving and loading functions
 * Tunable coupler helper
 * Aviod crossing helper
+
+### ToDoList
+> *Stop lazying*
+>>                    ---------Runaway_Fancy
+
+* Pulse sequence compiler
+* A better gate set paramter management system
+* Bentchmakring tool box
+* State/process/gate set tomography tool box
