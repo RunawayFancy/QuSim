@@ -10,6 +10,7 @@ from qusim.Instruments.tools import grad
 from qusim.PulseGen.simulation_option import SimulationOption 
 
 from collections import namedtuple
+from collections import defaultdict as ddict
 from typing import Literal, Optional, Iterable
 from enum import Enum
 
@@ -182,6 +183,27 @@ class PulseConfig():
         s.connect((host, port))
         s.send(pickle.dumps(self))
         s.close()
+
+    def export2dict(self) -> dict:
+        pulse_param_dict = ddict()
+        pulse_param_dict["pulse_index"] = self.pulse_index
+        pulse_param_dict["pulse_type"] = self.pulse_type
+        pulse_param_dict["pulse_shape"] = self.pulse_shape
+        pulse_param_dict["t_delay"] = self.t_delay
+        pulse_param_dict["t_width"] = self.t_delay
+        pulse_param_dict["t_plateau"] = self.t_plateau
+        pulse_param_dict["qindex"] = self.qindex
+        pulse_param_dict["phase"] = self.phase
+        pulse_param_dict["frequency"] = self.frequency
+        pulse_param_dict["amplitude"] = self.amplitude
+        pulse_param_dict["offset"] = self.offset
+        pulse_param_dict["noise"] = self.noise
+        pulse_param_dict["epsilon"] = self.epsilon
+        pulse_param_dict["frequency_detuning"] = self.frequency_detuning
+        pulse_param_dict["DRAG_config_list"] = self.DRAG_config_list
+        pulse_param_dict["predistortion"]= self.predistortion
+
+        return pulse_param_dict
         
     def get_pulse(self, sim_opts: SimulationOption) -> np.ndarray:
         """

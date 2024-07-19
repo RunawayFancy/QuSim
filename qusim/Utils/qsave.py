@@ -7,8 +7,11 @@ import pickle
 from tkinter import Tk, filedialog
 
 class QSave:
-    def __init__(self, path):
-        self.path = path
+    def __init__(self, path: str):
+        if path.endswith('/'):
+            self.path = path
+        else:
+            self.path = path + "/"
         self.init_directory
         self.init
 
@@ -106,10 +109,10 @@ class QSave:
             print("Invalid input. Please enter 'y' or 'n'.")
         pickle.dump([count, filename], open(f"{self.path}counts.pkl", "wb"))
 
-    def save(self, filename: str ,data=None, scan=None):
+    def save(self, filename: str, data=None, scan=None):
         count, _ = pickle.load(open(f"{self.path}counts.pkl", "rb"))
         if filename.endswith('.pkl'):
-            pass
+            filename = filename[0:-4] + f'_{count}.pkl'
         else:
             filename = filename + f'_{count}.pkl'
         # scan save, need a formate scan dict.
@@ -133,7 +136,7 @@ class QSave:
         return filenames  # Return the list of filenames for further use
     
     def load(self, *filenames):
-        print(filenames)
+        # print(filenames)
         if not filenames:
             filenames = self.sfile
         else:
