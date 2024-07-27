@@ -5,6 +5,7 @@ import os
 from collections import defaultdict as ddict
 from typing import Literal, Optional
 from tkinter import Tk, filedialog
+import numpy as np
 
 __SINGLE_Q_GATE_LABEL__ = [
     "I", "X", "Y", "Z", 'H'
@@ -26,6 +27,14 @@ class SystemInfo:
     def __init__(self, num_qubit: int , t_moment: float) -> None:
         self.num_qubit = num_qubit
         self.t_moment = t_moment
+    
+    @property
+    def sysinfo2dict(self) -> dict:
+        system_info_dict = dict()
+        system_info_dict["num_qubit"] = self.num_qubit
+        system_info_dict["t_moment"] = self.t_moment
+
+        return system_info_dict
 
 
 class GateSet:
@@ -41,6 +50,7 @@ class GateSet:
             self.path = f"{path}{__DEFAULT_PATH__}"
         else:
             self.path = f"{path}/{__DEFAULT_PATH__}"
+        self.init_directory
         self.case = case
         if self.case == "new":
             if not system_info:
@@ -50,15 +60,33 @@ class GateSet:
             self.system_info = system_info
             self.filename = filename
             self.gate_param = ddict(list)
-            self.gate_set_json = {"system_info": self.system_info, "gate_param": self.gate_param}
+            self.gate_info = dict()
+            self.gate_set_json = {"system_info": self.system_info.sysinfo2dict, "gate_info": self.gate_info, "gate_param": self.gate_param}
         else:
             if not filename:
                 self.filename = self.sfile
             else:
                 self.filename = filename
             self.gate_set_json = json.load(open(self.path+self.filename, 'rb'))
-            self.system_info = self.gate_set_yaml["system_info"]
-            self.gate_param = self.gate_set_yaml["gate_param"]
+            self.system_info = SystemInfo(self.gate_set_json["system_info"]["num_qubit"], self.gate_set_json["system_info"]["t_moment"])
+            self.gate_info = self.gate_set_json["gate_info"]
+            self.gate_param = self.gate_set_json["gate_param"]
+        pass
+
+
+    def get_num_of_moment(self, gate_label: str):
+        try:
+            gate_param_lst = self.gate_param[gate_label]
+        except:
+            raise(ValueError(f"Not such gate_label {gate_label} is found in gate_param dict."))
+        t_delay_lst = [pulse_config_dict["t_delay"] for pulse_config_dict in gate_param_lst]
+        num_of_moment = len(np.unique(t_delay_lst))
+
+        return num_of_moment
+
+
+    def gate_param_validity(self, pulse_param_dict):
+        assert pulse_param_dict["t_width"] + pulse_param_dict["t_plateau"] <= self.system_info.t_moment
         pass
 
 
@@ -84,8 +112,29 @@ class GateSet:
                 switch = 0
                 print("Invalid input. Please enter 'y' or 'n'. ")
         if switch > 0:
+            gate_param_lst_buffer = []
             for pulse in pseq:
-                self.gate_param[gate_label].append(pulse.export2dict())
+                pulse_param_dict = pulse.export2dict()
+                self.gate_param_validity(pulse_param_dict)
+                gate_param_lst_buffer.append(pulse_param_dict)
+            self.gate_param[gate_label] = gate_param_lst_buffer
+
+            t_delay_lst = [[_i, pulse_config_dict["t_delay"]] for _i,pulse_config_dict in enumerate(self.gate_param[gate_label])]
+            sorted_t_delay_lst = sorted(t_delay_lst, key=lambda x: x[1])
+
+            current_t_delay = np.min(np.array(sorted_t_delay_lst)[:,1])
+            _j=0
+            for kv in sorted_t_delay_lst:
+                if kv[1] > current_t_delay:
+                    _j += 1
+                self.gate_param[gate_label][kv[0]]["t_delay"]=self.system_info.t_moment * _j
+
+            num_of_moment = len(np.unique(t_delay_lst))
+            try:
+                self.gate_info[gate_label]["num_of_moment"] = num_of_moment
+            except:
+                self.gate_info[gate_label] = ddict()
+                self.gate_info[gate_label]["num_of_moment"] = num_of_moment
         pass
 
 
@@ -103,9 +152,21 @@ class GateSet:
     @property
     def sleep(self):
         print("Sleeping...")
-        json.save(self.gate_set_json, open(f"{self.path}{self.filename}", "wb"))
+        json.dump(self.gate_set_json, open(f"{self.path}{self.filename}.json", "w"), sort_keys=True, separators=(',', ': '))
         print(f"File save as {self.path}{self.filename}")
         pass
+
+
+    @property
+    def init_directory(self):
+        if not os.path.exists(self.path):
+            try:
+                os.makedirs(self.path)
+                print(f'Directory {self.path} created successfully.')
+            except Exception as e:
+                print(f"An error occurred while creating directory {self.path}: {e}")
+        else:
+            print(f'Directory {self.path} exists.')
 
 
     @property

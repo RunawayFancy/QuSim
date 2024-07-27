@@ -1,5 +1,5 @@
 from qusim.Utils.gate_set import SystemInfo, GateSet
-
+from typing import Optional 
 
 class PulseSeqCompiler:
 
@@ -12,8 +12,18 @@ class PulseSeqCompiler:
         
         pass
 
+    def gate_seq_validity(self):
+        # The number of gate sequence must equal to the number of qubit
+        assert len(self.gate_seq) == self.system_info.num_qubit
+        
+        
+
+        pass
     
-    def compile_pseq(self):
+    def compile_pseq(
+            self,
+            vritual_Z: Optional[bool] = True
+        ):
         
         
         pass

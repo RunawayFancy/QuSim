@@ -58,7 +58,7 @@ def plot_pulse_sequence(pseq: list[PulseConfig], sim_opts: SimulationOption):
         index = 1
         for waveform in channel_dic[channel_name]:
             vertical_offset = i * vertical_spacing
-            print(np.max(waveform))
+            # print(np.max(waveform))
             waveform_offset = waveform + vertical_offset
             for _j, _off in enumerate(waveform_offset):
                 if _off == vertical_offset: 
@@ -68,15 +68,16 @@ def plot_pulse_sequence(pseq: list[PulseConfig], sim_opts: SimulationOption):
             index += 1
 
     # Set the y-axis tick labels and limits for channel plot
+    print(len(channel_dic))
     ax1.set_yticks(np.arange(len(channel_dic)) * vertical_spacing)
     ax1.set_yticklabels(sorted_channels)
-    ax1.set_ylim(-vertical_spacing/2, len(channel_dic) * vertical_spacing/2)
+    ax1.set_ylim(-vertical_spacing/2, len(channel_dic) * vertical_spacing)
     ax1.set_xlim(0, sim_opts.simulation_time)
     ax1.set_xlabel("Time (ns)")
     ax1.set_ylabel("Channel name")
     # Create a twin axes for the pulse amplitude
     ax2 = ax1.twinx()
-    ax2.set_ylim(-vertical_spacing/2, len(channel_dic) * vertical_spacing/2)
+    ax2.set_ylim(-vertical_spacing/2, len(channel_dic) * vertical_spacing)
     ax2.set_ylabel("Pulse Amplitude (a.u.)")
     plt.grid()
     fig.show()

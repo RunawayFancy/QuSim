@@ -45,6 +45,29 @@ def tanh(tlist: np.ndarray, pulse: 'PulseConfig'):
 def hyper(tlist: np.ndarray, pulse: 'PulseConfig'):
     return pulse.amplitude * edges.hyper_edge(tlist, pulse.t_delay, pulse.t_width, pulse.t_plateau, pulse.epsilon)
 
+# class Cosine(Enum):
+#     FN = cosine
+#     LABEL = "cosine"
+
+# class HCosine(Enum):
+#     FN = hcosine
+#     LABEL = "hcosine"
+
+# class Cosh(Enum):
+#     FN = cosh
+#     LABEL = "cosh"
+
+# class Square(Enum):
+#     FN = square
+#     LABEL = "square"
+
+# class Tanh(Enum):
+#     FN = tanh
+#     LABEL = "tanh"
+
+# class Hyper(Enum):
+#     FN = hyper
+#     LABEL = "hyper"
 
 class PulseShapeFn(Enum):
     """
@@ -61,6 +84,13 @@ class PulseShapeFn(Enum):
     COSH = cosh
     TANH = tanh
     HYPER = hyper
+
+    # SQUARE = Square
+    # COSINE = Cosine
+    # HCOSINE = HCosine
+    # COSH = Cosh
+    # TANH = Tanh
+    # HYPER = Hyper
 
 # noise_chan1 = [
 #     {
@@ -185,10 +215,10 @@ class PulseConfig():
         s.close()
 
     def export2dict(self) -> dict:
-        pulse_param_dict = ddict()
+        pulse_param_dict = dict()
         pulse_param_dict["pulse_index"] = self.pulse_index
         pulse_param_dict["pulse_type"] = self.pulse_type
-        pulse_param_dict["pulse_shape"] = self.pulse_shape
+        pulse_param_dict["pulse_shape"] = self.pulse_shape.__name__
         pulse_param_dict["t_delay"] = self.t_delay
         pulse_param_dict["t_width"] = self.t_delay
         pulse_param_dict["t_plateau"] = self.t_plateau
