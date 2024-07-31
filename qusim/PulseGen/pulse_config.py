@@ -220,7 +220,7 @@ class PulseConfig():
         pulse_param_dict["pulse_type"] = self.pulse_type
         pulse_param_dict["pulse_shape"] = self.pulse_shape.__name__
         pulse_param_dict["t_delay"] = self.t_delay
-        pulse_param_dict["t_width"] = self.t_delay
+        pulse_param_dict["t_width"] = self.t_width
         pulse_param_dict["t_plateau"] = self.t_plateau
         pulse_param_dict["qindex"] = self.qindex
         pulse_param_dict["phase"] = self.phase

@@ -68,7 +68,7 @@ def plot_pulse_sequence(pseq: list[PulseConfig], sim_opts: SimulationOption):
             index += 1
 
     # Set the y-axis tick labels and limits for channel plot
-    print(len(channel_dic))
+    # print(len(channel_dic))
     ax1.set_yticks(np.arange(len(channel_dic)) * vertical_spacing)
     ax1.set_yticklabels(sorted_channels)
     ax1.set_ylim(-vertical_spacing/2, len(channel_dic) * vertical_spacing)

@@ -1,4 +1,4 @@
-from qusim.PulseGen.pulse_config import PulseConfig, PulseShapeFn
+from qusim.PulseGen.pulse_config import PulseConfig
 from copy import deepcopy
 import json
 import os
@@ -6,7 +6,6 @@ from collections import defaultdict as ddict
 from typing import Literal, Optional
 from tkinter import Tk, filedialog
 import numpy as np
-from math import ceil
 
 __SINGLE_Q_GATE_LABEL__ = [
     "I", "X", "Y", "Z", 'H'
@@ -75,20 +74,21 @@ class GateSet:
         pass
 
 
-    # def get_num_of_moment(self, gate_label: str):
-    #     try:
-    #         gate_param_lst = self.gate_param[gate_label]
-    #     except:
-    #         raise(ValueError(f"Not such gate_label {gate_label} is found in gate_param dict."))
-    #     t_dwp_arr = np.array([pulse_config_dict["t_delay"]+ pulse_config_dict["t_width"]+pulse_config_dict["t_plateau"] for pulse_config_dict in gate_param_lst], dtype= float)
-    #     t_duration = np.max(t_dwp_arr)
-    #     num_of_moment = 0.5 * ceil(2 * t_duration/self.system_info.t_moment)
+    def get_num_of_moment(self, gate_label: str):
+        try:
+            gate_param_lst = self.gate_param.get(gate_label,0)
+        except:
+            raise(ValueError(f"The input {gate_label} should be a string."))
+        if gate_param_lst ==0:
+            raise(ValueError(f"Not such gate_label {gate_label} is found in gate_param dict."))
+        t_delay_lst = [pulse_config_dict["t_delay"] for pulse_config_dict in gate_param_lst]
+        num_of_moment = len(np.unique(t_delay_lst))
 
-    #     return num_of_moment
+        return num_of_moment
 
 
     def gate_param_validity(self, pulse_param_dict):
-        # assert pulse_param_dict["t_delay"] + pulse_param_dict["t_width"] + pulse_param_dict["t_plateau"] <= self.system_info.t_moment
+        assert pulse_param_dict["t_width"] + pulse_param_dict["t_plateau"] <= self.system_info.t_moment
         pass
 
 
@@ -131,10 +131,7 @@ class GateSet:
                     _j += 1
                 self.gate_param[gate_label][kv[0]]["t_delay"]=self.system_info.t_moment * _j
 
-            t_dwp_lst = [(pulse_config_dict["t_delay"]+pulse_config_dict["t_width"]+pulse_config_dict["t_plateau"]) for pulse_config_dict in gate_param_lst_buffer]
-            t_duration = np.max(t_dwp_lst)
-            num_of_moment = ceil(t_duration/self.system_info.t_moment)
-
+            num_of_moment = len(np.unique(t_delay_lst))
             try:
                 self.gate_info[gate_label]["num_of_moment"] = num_of_moment
             except:
@@ -147,7 +144,6 @@ class GateSet:
         response = input(f"Deleting gate parameter {gate_label}, are you sure? [y/n]: ")
         if response.lower() == 'y':
             del self.gate_param[gate_label]
-            del self.gate_info[gate_label]
         elif response.lower() == 'n':
             print("No action taken, think twice next time!")
         else:
@@ -179,9 +175,10 @@ class GateSet:
     def reload(self):
         response = input(f"Reloading gate parameter, are you sure? [y/n]: ")
         if response.lower() == 'y':
-            self.gate_set_json = json.load(open(self.path+self.filename, 'rb'))
-            self.system_info = self.gate_set_yaml["system_info"]
-            self.gate_param = self.gate_set_yaml["gate_param"]
+            self.gate_set_json = json.load(open(f"{self.path}{self.filename}.json", 'rb'))
+            system_info_dict = self.gate_set_json["system_info"]
+            self.system_info = SystemInfo(system_info_dict["num_qubit"], system_info_dict["t_moment"])
+            self.gate_param = self.gate_set_json["gate_param"]
         elif response.lower() == 'n':
             print("No action taken, think twice next time!")
         else:
@@ -202,39 +199,3 @@ class GateSet:
 
         return filenames  # Return the list of filenames for further use
 
-
-    ## dict to PulseConfig obj
-    def dict2pulseconfig(self, gate_label: str):
-        assert gate_label in self.gate_param.keys()
-        gate_pseq = []
-        for gpd in self.gate_param[gate_label]:
-            gate_pseq.append(
-                PulseConfig(
-                    pulse_index=gpd["pulse_index"],
-                    pulse_type=gpd["pulse_type"],
-                    pulse_shape=__STR2PULSESHAPE__[gpd["pulse_shape"]],
-                    t_delay=gpd["t_delay"],
-                    t_width=gpd["t_width"],
-                    t_plateau=gpd["t_plateau"],
-                    qindex=gpd["qindex"],
-                    phase=gpd["phase"],
-                    frequency=gpd["frequency"],
-                    amplitude=gpd["amplitude"],
-                    offset=gpd["offset"],
-                    noise=gpd["noise"],
-                    epsilon=gpd["epsilon"],
-                    frequency_detuning=gpd["frequency_detuning"],
-                    DRAG_config_list=gpd["DRAG_config_list"],
-                    predistortion=gpd["predistortion"]
-                )
-            )
-        return gate_pseq
-    
-__STR2PULSESHAPE__ = {
-    "cosine": PulseShapeFn.COSINE,
-    "cosh": PulseShapeFn.COSH,
-    "hyper": PulseShapeFn.HYPER,
-    "hcosine": PulseShapeFn.HCOSINE,
-    "square": PulseShapeFn.SQUARE,
-    "tanh": PulseShapeFn.TANH
-}
