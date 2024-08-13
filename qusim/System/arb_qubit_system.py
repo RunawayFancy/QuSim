@@ -345,7 +345,7 @@ class ArbQubitSys:
             estimating the probability amplitude of each degenerated 
             state.
         '''
-        max_index = self.get_state_index(n, freq_threshold = 1e-6, deg_threshold = 5e-3, deg_round = 7)
+        max_index = self.get_state_index(n, freq_threshold, deg_threshold, deg_round)
         eigen_val_state = self.H.eigenstates()
         eigenstates, eigenenergies = eigen_val_state[1][max_index], eigen_val_state[0][max_index]/2/np.pi
         # Return a qobj eigenstate, energy level magnitude, and the index of the energy  level

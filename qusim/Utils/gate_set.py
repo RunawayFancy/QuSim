@@ -63,6 +63,7 @@ class GateSet:
             self.gate_param = ddict(list)
             self.gate_info = dict()
             self.gate_set_json = {"system_info": self.system_info.sysinfo2dict, "gate_info": self.gate_info, "gate_param": self.gate_param}
+            print(f"Successfully create gate set {self.filename}")
         else:
             if not filename:
                 self.filename = self.sfile
@@ -202,6 +203,12 @@ class GateSet:
 
         return filenames  # Return the list of filenames for further use
 
+    @property
+    def ls(self): return self.gate_info
+
+    def __repr__(self) -> str:
+        return self.gate_info.__repr__()
+
 
     ## dict to PulseConfig obj
     def dict2pulseconfig(self, gate_label: str):
@@ -229,6 +236,12 @@ class GateSet:
                 )
             )
         return gate_pseq
+    
+    # def __str__(self):
+    #     return \
+    #         f'name={self.pulse_type}{self.qindex},' \
+    #         f'pid={self.pulse_index},'              \
+    #         f'shp={self.pulse_shape.__name__}'
     
 __STR2PULSESHAPE__ = {
     "cosine": PulseShapeFn.COSINE,
