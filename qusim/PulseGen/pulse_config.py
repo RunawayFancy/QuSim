@@ -8,6 +8,7 @@ import qusim.PulseGen.edges as edges
 from qusim.PulseGen.noise_gen import noise_gen
 from qusim.Instruments.tools import grad
 from qusim.PulseGen.simulation_option import SimulationOption 
+from qusim.PulseGen.noise_config import * 
 
 from collections import namedtuple
 from collections import defaultdict as ddict
@@ -162,7 +163,7 @@ class PulseConfig():
         frequency: float = 0,
         amplitude: float = 0,
         offset: Optional[float] = None,
-        noise: Optional[list] = None,
+        noise: Optional[list[GaussianNoiseConfig|RandomTeleNoiseConfig|JNNoiseConfig|OneOverFNoiseConfig]] = None,
         epsilon: float = 1,
         frequency_detuning: Optional[float] = None,
         
@@ -286,8 +287,8 @@ class PulseConfig():
         return -1j*grad(ylist)/delta_t * DRAG_config.scale/(2*PI * DRAG_config.delta)
     
     def add_noise(self, ylist: np.ndarray, sim_opts: SimulationOption):
-        for config in self.noise:
-            noise = noise_gen(0, sim_opts.simulation_time, sim_opts.simulation_point, config)
+        for noise_config in self.noise:
+            noise = noise_gen(noise_config, deepcopy(ylist))
             ylist += np.real(noise)
 
         return ylist
