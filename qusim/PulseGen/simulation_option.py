@@ -19,3 +19,8 @@ class SimulationOption():
         
         self.tlist = np.linspace(0, self.simulation_time, self.simulation_point)
         # self.tlist = np.linspace(0, self.simulation_time, self.simulation_point)
+
+        if self.simulation_point > 1:
+            self.dt = self.tlist[1] - self.tlist[0]
+        else:
+            self.dt = None

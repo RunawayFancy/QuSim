@@ -83,7 +83,7 @@ class PulseSeqCompiler:
                 if np.max(num_of_moment_lst) == np.min(num_of_moment_lst):
                     pseq.extend(pseq_buffer_lst)
                 else:
-                    ValueError(f"Imcompatible number of t_moment: gate layer {_i}")
+                    raise(ValueError(f"Imcompatible number of t_moment: gate layer {_i}"))
                 t_delay_buffer += np.max(num_of_moment_lst)*self.t_moment
             else:
                 pass

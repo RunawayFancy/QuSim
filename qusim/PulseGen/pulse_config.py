@@ -130,22 +130,23 @@ class PulseConfig():
     pulse_index: int
     pulse_type: Literal['XY', 'Z', 'INT']
     pulse_shape: PulseShapeFn
+
     t_delay: float
     t_width: float
     t_plateau: float
     qindex: int|list
-    
-    phase: float
-    frequency: float
-    amplitude: float
-    offset: Optional[float] = None
-    noise: dict
-    epsilon: float
 
+    phase: float = 0
+    frequency: float = 0
+    amplitude: float = 0
+    offset: Optional[float] = None
+    noise: Optional[list] = None
+    epsilon: float = 1
     frequency_detuning: Optional[float] = None
+    
     DRAG_config_list: Optional[Iterable[DRAGConfig]] = None
 
-    predistortion: list
+    predistortion: Optional[list] = None
 
     def __init__(self,
         pulse_index: int,

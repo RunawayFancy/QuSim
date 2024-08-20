@@ -123,6 +123,7 @@ class QSave:
             pickle.dump(data, open(f"{self.path}{filename}", "wb"))
             pickle.dump([count+1, filename], open(f"{self.path}counts.pkl", "wb"))
             print(f"Save as file {filename}")
+        return filename
 
     @property
     def sfile(self):
