@@ -2,7 +2,7 @@
 """
 @author: Meng Wang, Jiheng Duan
 """
-from typing import List
+from typing import List, Optional, Tuple, Union
 import numpy as np
 import copy
 from qutip import *
@@ -11,6 +11,8 @@ from qusim.PulseGen.simulation_option import SimulationOption
 from qusim.PulseGen.pulse_buffer import merge_pulse_chan
 import qusim.Instruments.tools as tool
 from qusim.Instruments.angle import get_angle
+from qusim.PulseGen.noise_config import * 
+from qusim.PulseGen.noise_gen import noise_gen
 
 
 def hermitian_conjugate(matrix):
@@ -33,6 +35,7 @@ class ArbQubitSys:
     A class of a multiple qubit interacting system
     """
     def __init__(self, freq_list, inter_list=None, r=0, extra_list = None, gamma_list=None, driving_list = None, bias_list = None):
+
         self.freq_list = freq_list # Energy of each state, each qubit
         self.w = self.get_w()
         self.num_q = len(self.freq_list) # Num of qubit
@@ -59,6 +62,30 @@ class ArbQubitSys:
 
         self.N = self.num_q * max(self.q_dim_list) + 1
         self.state_dic = enr_state_dictionaries(self.q_dim_list, self.N)
+        self.qchannel = self.get_qchannel()
+        self.pulse_type_mapping={
+            "XY": self.get_H_XY_drive,
+            "Z": self.get_H_Z_bias,
+            "INT": self.get_H_int_bias
+        }
+
+
+    def get_qchannel(self):
+        """
+        Channel name: tuple
+            ("XY", 1)
+            ("Z", 1)
+            ("INT", [1,2])
+        """ 
+        inter_combination = tool.get_combinations(self.num_q)
+        qchannel_single = [gate for _qidx in range(self.num_q) for gate in [("XY", _qidx), ("Z", _qidx)]]
+        if self.num_q >1:
+            qchannel_int = [gate for _qidx in inter_combination for gate in [("INT", list(_qidx))]]
+        else:
+            qchannel_int = []
+        qchannel = qchannel_single+ qchannel_int
+        
+        return qchannel
 
 
     def get_w(self):
@@ -388,6 +415,60 @@ class ArbQubitSys:
         return co_list
     
 
+    def get_H_d(self, 
+            pseq: List[PulseConfig],
+            sim_opts: SimulationOption,
+            channel_noise: Optional[List[Tuple[tuple, List[Union[GaussianNoiseConfig, RandomTeleNoiseConfig, JNNoiseConfig, OneOverFNoiseConfig]]]]] = None
+        ):
+        H_d = []
+        H_d.append(self.H)
+        pulse_buffer_lst = [[] for _ in range(3)]
+        for pulse in pseq:
+            pulse_buffer_lst = merge_pulse_chan(pulse_buffer_lst, pulse, self.send_pulse(pulse, sim_opts))
+
+        pulse_buffer_lst = self.add_channel_noise(pulse_buffer_lst, sim_opts, channel_noise)
+
+        for Hd_i in pulse_buffer_lst[2]:
+            H_d.append(Hd_i)
+
+        return H_d
+    
+    def get_Hd_channel(self, pulse_buffer_lst:list):
+        Hd_channel_list = []
+        for _i in range(len(pulse_buffer_lst[0])):
+            chan_name = (pulse_buffer_lst[0][_i], pulse_buffer_lst[1][_i])
+            Hd_channel_list.append(chan_name)
+
+        return Hd_channel_list
+    
+    def add_channel_noise(self,
+            pulse_buffer_lst: list,
+            sim_opts: SimulationOption,
+            channel_noise: Optional[List[Tuple[tuple, List[Union[GaussianNoiseConfig, RandomTeleNoiseConfig, JNNoiseConfig, OneOverFNoiseConfig]]]]] = None
+        ):
+        if not channel_noise:
+            return pulse_buffer_lst
+        for chan_name, noise_config_list in channel_noise:
+            Hd_channel_list = self.get_Hd_channel(pulse_buffer_lst)
+            assert chan_name in self.qchannel
+            try:
+                chan_idx = Hd_channel_list.index(chan_name)
+                waveform = copy.deepcopy(pulse_buffer_lst[2][chan_idx][1])
+                for noise_config in noise_config_list:
+                    pulse_buffer_lst[2][chan_idx][1] += np.real(noise_gen(noise_config, waveform))
+            except:
+                opeartor = self.pulse_type_mapping[chan_name[0]](chan_name[1])
+                y = np.zeros_like(sim_opts.tlist)
+                waveform = copy.deepcopy(y)
+                for noise_config in noise_config_list:
+                    y += np.real(noise_gen(noise_config, waveform))
+                pulse_buffer_lst[0].append(chan_name[0])
+                pulse_buffer_lst[1].append(chan_name[1])
+                pulse_buffer_lst[2].append([opeartor, y])
+
+        return pulse_buffer_lst
+    
+
     def system_dynamics_mesolve(self, pseq: List[PulseConfig], sim_opts = SimulationOption, option = Options(rtol=1e-8)):
         """
         A method to convert your defined system into the master equation solver in qutip.
@@ -395,13 +476,14 @@ class ArbQubitSys:
         """
         state_list = sim_opts.initial_state
         result_list, angle_list = [], []
+        H_d = self.get_H_d(pseq, sim_opts)
         for state in state_list:
-            H_d = []; pulse_buffer_lst = [[] for _ in range(3)]
-            H_d.append(self.H)
-            for pulse in pseq:
-                pulse_buffer_lst = merge_pulse_chan(pulse_buffer_lst, pulse, self.send_pulse(pulse, sim_opts))
-            for Hd_i in pulse_buffer_lst[2]:
-                H_d.append(Hd_i)
+            # H_d = []; pulse_buffer_lst = [[] for _ in range(3)]
+            # H_d.append(self.H)
+            # for pulse in pseq:
+            #     pulse_buffer_lst = merge_pulse_chan(pulse_buffer_lst, pulse, self.send_pulse(pulse, sim_opts))
+            # for Hd_i in pulse_buffer_lst[2]:
+            #     H_d.append(Hd_i)
             initial_state = copy.deepcopy(state)
             # Set up master equation solver
             result, angle = self.master_eq_solver(H_d, sim_opts.tlist, initial_state, option)
@@ -465,7 +547,7 @@ class ArbQubitSys:
         H_XY_drive = self.get_H_XY_drive(pulse.qindex)
         # Tensor product, get the total driving Hamiltonian
         qeye_list = self.qeye_list.copy()
-        qeye_list[pulse.qindex,] = H_XY_drive
+        qeye_list[pulse.qindex] = H_XY_drive
         H_XY = cal_tensor(qeye_list)
 
         return [H_XY, XY_pulse]
@@ -527,3 +609,4 @@ class ArbQubitSys:
             data_list.append(data_list_dummy)
             index += 1
         return data_list
+

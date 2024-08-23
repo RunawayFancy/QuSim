@@ -4,11 +4,12 @@
 """
 from qusim.PulseGen.noise_config import * 
 import numpy as np
+from typing import Union
 
 def noise_gen(
-        noise_config: GaussianNoiseConfig|RandomTeleNoiseConfig|JNNoiseConfig|OneOverFNoiseConfig,
+        noise_config: Union[GaussianNoiseConfig|RandomTeleNoiseConfig|JNNoiseConfig|OneOverFNoiseConfig],
         waveform: np.ndarray
-    ):
+    ) -> np.ndarray:
     """
     Generate noise to be added to a qubit control pulse.
 
@@ -21,7 +22,7 @@ def noise_gen(
         if noise_config.noise_time_config.tranfofn:
             noise_base = noise_config.noise_time_config.tranfofn(tlist, waveform)
         else:
-            raise(TypeError("Time dependent noise requires transformation function `tranfofn`."))
+            raise TypeError("Time dependent noise requires transformation function `tranfofn`.")
     else:
         noise_base = np.ones_like(tlist)
 

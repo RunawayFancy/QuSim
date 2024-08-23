@@ -29,7 +29,7 @@ class NoiseTimeConfig:
         tranfofn input
             tranfofn(tlist: np.ndarray, waveform, np.ndarray) -> np.ndarray
             
-            assert tlist.shape == waveform.shape
+            assert tlist.shape ==waveform.shape
     """
     def __init__(self,
         simopt: SimulationOption,
@@ -140,12 +140,16 @@ class OneOverFNoiseConfig:
     """
     def __init__(self,
         noise_time_config: NoiseTimeConfig,
+        hfreq: float,
+        lfreq: float,
         alpha: float = 0.9, # 1/f^alpha
         scale: float = 1 # scale/f^alpha
     ):
         self.noise_time_config = noise_time_config
         self.alpha = alpha,
-        self.scale = scale
+        self.scale = scale,
+        self.cutoff_freq_high = hfreq
+        self.cutoff_freq_low = lfreq
     
     def trigger(self, seg_length: int) -> np.ndarray:
         """

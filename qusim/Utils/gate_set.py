@@ -66,7 +66,7 @@ class GateSet:
             print(f"Successfully create gate set {self.filename}")
         else:
             if not filename:
-                self.filename = self.sfile
+                self.filename = self.sfile[0]
             else:
                 self.filename = filename
             self.gate_set_json = json.load(open(self.path+self.filename, 'rb'))

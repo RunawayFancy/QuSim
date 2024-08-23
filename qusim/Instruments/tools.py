@@ -6,6 +6,7 @@ import os
 import pickle
 import numpy as np
 from scipy.signal import find_peaks
+import itertools
 
 def r2matrix(r_dic, frequency_list):
     n = len(frequency_list)
@@ -143,3 +144,10 @@ def find_similar_indices(arr, threshold):
                 similar_indices.extend([i, j])
 
     return list(set(similar_indices))
+
+
+def get_combinations(num):
+    numbers = range(num)
+    combinations = list(itertools.combinations(numbers, 2))
+    
+    return combinations
