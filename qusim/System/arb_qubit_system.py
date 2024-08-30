@@ -455,13 +455,23 @@ class ArbQubitSys:
                 chan_idx = Hd_channel_list.index(chan_name)
                 waveform = copy.deepcopy(pulse_buffer_lst[2][chan_idx][1])
                 for noise_config in noise_config_list:
-                    pulse_buffer_lst[2][chan_idx][1] += np.real(noise_gen(noise_config, waveform))
+                    if noise_config.methods == 'sum':
+                        pulse_buffer_lst[2][chan_idx][1] += np.real(noise_gen(noise_config, waveform))
+                    elif noise_config.methods == 'multiply':
+                        pulse_buffer_lst[2][chan_idx][1] *= np.real(noise_gen(noise_config, waveform))
+                    else:
+                        raise AttributeError('Missing attributes methods in noise config.')
             except:
                 opeartor = self.pulse_type_mapping[chan_name[0]](chan_name[1])
                 y = np.zeros_like(sim_opts.tlist)
                 waveform = copy.deepcopy(y)
                 for noise_config in noise_config_list:
-                    y += np.real(noise_gen(noise_config, waveform))
+                    if noise_config.methods == 'sum':
+                        y += np.real(noise_gen(noise_config, waveform))
+                    elif noise_config.methods == 'multiply':
+                        y *= np.real(noise_gen(noise_config, waveform))
+                    else:
+                        raise AttributeError('Missing attributes methods in noise config.')
                 pulse_buffer_lst[0].append(chan_name[0])
                 pulse_buffer_lst[1].append(chan_name[1])
                 pulse_buffer_lst[2].append([opeartor, y])
@@ -469,14 +479,19 @@ class ArbQubitSys:
         return pulse_buffer_lst
     
 
-    def system_dynamics_mesolve(self, pseq: List[PulseConfig], sim_opts = SimulationOption, option = Options(rtol=1e-8)):
+    def system_dynamics_mesolve(self, 
+            pseq: List[PulseConfig], 
+            sim_opts: SimulationOption, 
+            channel_noise: Optional[List[Tuple[tuple, List[Union[GaussianNoiseConfig, RandomTeleNoiseConfig, JNNoiseConfig, OneOverFNoiseConfig]]]]] = None,
+            option: Options = Options(rtol=1e-8)
+        ):
         """
         A method to convert your defined system into the master equation solver in qutip.
         
         """
         state_list = sim_opts.initial_state
         result_list, angle_list = [], []
-        H_d = self.get_H_d(pseq, sim_opts)
+        H_d = self.get_H_d(pseq, sim_opts, channel_noise)
         for state in state_list:
             # H_d = []; pulse_buffer_lst = [[] for _ in range(3)]
             # H_d.append(self.H)
@@ -500,13 +515,21 @@ class ArbQubitSys:
         return result, angle
     
 
-    def system_dynamics_propagator(self, sim_opts: SimulationOption, pseq: List[PulseConfig], option = Options(rtol=1e-8), do_parallel = True, do_progress_bar=True):
-        H_d = []; pulse_buffer_list = [[] for _ in range(3)]
-        H_d.append(self.H)
-        for pulse in pseq:
-            pulse_buffer_list = merge_pulse_chan(pulse_buffer_list, pulse, self.send_pulse(pulse, sim_opts))
-        for Hd_i in pulse_buffer_list[2]:
-            H_d.append(Hd_i)
+    def system_dynamics_propagator(self, 
+            sim_opts: SimulationOption, 
+            pseq: List[PulseConfig], 
+            channel_noise: Optional[List[Tuple[tuple, List[Union[GaussianNoiseConfig, RandomTeleNoiseConfig, JNNoiseConfig, OneOverFNoiseConfig]]]]] = None,
+            option: Options = Options(rtol=1e-8), 
+            do_parallel = True, 
+            do_progress_bar=True
+        ):
+        # H_d = []; pulse_buffer_list = [[] for _ in range(3)]
+        # H_d.append(self.H)
+        # for pulse in pseq:
+        #     pulse_buffer_list = merge_pulse_chan(pulse_buffer_list, pulse, self.send_pulse(pulse, sim_opts))
+        # for Hd_i in pulse_buffer_list[2]:
+        #     H_d.append(Hd_i)
+        H_d = self.get_H_d(pseq, sim_opts, channel_noise)
         result = propagator(H_d, sim_opts.tlist, self.co_list, {} , option, parallel=do_parallel, progress_bar=do_progress_bar)
 
         return result

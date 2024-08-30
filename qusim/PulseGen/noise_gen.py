@@ -19,17 +19,24 @@ def noise_gen(
 
     tlist = noise_config.noise_time_config.simopt.tlist
     if noise_config.noise_time_config.time_dependent:
-        if noise_config.noise_time_config.tranfofn:
-            noise_base = noise_config.noise_time_config.tranfofn(tlist, waveform)
+        if noise_config.noise_time_config.tdbasefn:
+            noise_base = noise_config.noise_time_config.tdbasefn(tlist, waveform)
         else:
-            raise TypeError("Time dependent noise requires transformation function `tranfofn`.")
+            raise TypeError("Time dependent noise requires time-dependent base function `tdbasefn`.")
     else:
         noise_base = np.ones_like(tlist)
 
-    noise_segments = segmentize(tlist, noise_config.noise_time_config.tseg, noise_base)
-    noise_multiplier = noise_config.trigger(len(noise_segments))
+    if noise_config.type == '1/f':
+        noise_arr = noise_base * noise_config.trigger(len(tlist))
+    else:
 
-    noise_arr = np.array(np.concatenate([sublist * noise_multiplier[_i] for _i, sublist in enumerate(noise_segments)]))
+        noise_segments = segmentize(tlist, noise_config.noise_time_config.tseg, noise_base)
+        noise_multiplier = noise_config.trigger(len(noise_segments))
+
+        noise_arr = np.array(np.concatenate([sublist * noise_multiplier[_i] for _i, sublist in enumerate(noise_segments)]))
+
+    if noise_config.noise_time_config.tranfofn:
+        noise_arr = noise_config.noise_time_config.tranfofn(noise_arr)
 
     noise_arr[(tlist < noise_config.noise_time_config.tstart) | (tlist > noise_config.noise_time_config.tstop)] = 0
 
