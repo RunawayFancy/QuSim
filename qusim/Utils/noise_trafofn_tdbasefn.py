@@ -23,10 +23,16 @@ def dJdV(v_barrier: np.ndarray, lever_arm = 1, J_res = Jres):
 
 
 def tdbase_charge_noise(tlist: np.ndarray, waveform: np.ndarray):
+    """
+    Suggested method: 'multiply'
+    """
     Vbarrier_arr = J2Vbarrier(waveform+Jres)
     sensitivity_arr = dJdV(Vbarrier_arr)
     return sensitivity_arr
 
 
 def tranfofn_charge_noise(v_barrier: np.ndarray, lever_arm: float = 1):
+    """
+    Suggested method: 'sum'
+    """
     return np.exp(2*lever_arm*v_barrier)

@@ -152,35 +152,42 @@ class OneOverFNoiseConfig:
     """
     def __init__(self,
         noise_time_config: NoiseTimeConfig,
-        hfreq: float = 1e10,
+        freqs: Optional[np.ndarray] = None,
+        hfreq: float = 1e12,
         lfreq: float = 1e-2,
         alpha: float = 0.9, # 1/f^alpha
-        amp: float = 1.0,
-        scale: float = 1e10, # scales the ifft noise time series
-        normalized: Literal['no', 'std', 'max'] = 'no', # Normalized the ifft signal with std
-        methods: Literal['sum', 'multiply'] = 'sum'
+        scale: float = 25, # scales the ifft noise time series
+        methods: Literal['sum', 'multiply'] = 'sum',
+        skip_trigger: bool = False,
+        # normalized: Literal['no', 'std', 'max'] = 'no', # Normalized the ifft signal with std
+        
     ):
         self.noise_time_config = noise_time_config
         self.alpha = alpha
-        self.amp = amp
         self.scale = scale
         self.cutoff_freq_high = hfreq
         self.cutoff_freq_low = lfreq
-        self.normalized = normalized
-        self.type = '1/f'
         self.methods = methods
+        # self.normalized = normalized
+
+        self.skip_trigger = skip_trigger
+        if freqs:
+            assert len(freqs) == self.noise_time_config.simopt.simulation_point
+            self.freqs = freqs
+            raise Warning('skip_trigger is true for custome frequency array.')
+        else:
+            self.freqs = np.linspace(self.cutoff_freq_low, self.cutoff_freq_high, self.noise_time_config.simopt.simulation_point)
+            self.skip_trigger = True
+        self.type = '1/f'
     
     def trigger(self, N: int) -> np.ndarray:
-        """
-        Unfinished.
-        """
-        dt = self.noise_time_config.simopt.dt*1e-9
-        T =  self.noise_time_config.simopt.simulation_time*1e-9
-        freqs = np.fft.fftfreq(N, d=dt)
-        freq_band_mask = (np.abs(freqs) >= self.cutoff_freq_low) & (np.abs(freqs) <= self.cutoff_freq_high)
-        S_f = np.zeros(N)
-        mm = self.scale * self.amp
-        S_f[freq_band_mask] = mm * np.abs(freqs[freq_band_mask]) ** (-self.alpha)
+        assert N == len(self.freqs)
+        if self.skip_trigger:
+            S_f = self.scale * np.abs(self.freqs) ** (-self.alpha)
+        else:
+            freq_band_mask = (np.abs(self.freqs) >= self.cutoff_freq_low) & (np.abs(self.freqs) <= self.cutoff_freq_high)
+            S_f = np.zeros(N)
+            S_f[freq_band_mask] = self.scale * np.abs(self.freqs[freq_band_mask]) ** (-self.alpha)
         phases = np.random.uniform(0, 2 * np.pi, N)
         A_f = S_f * np.exp(1j * phases)
         A_f = np.fft.ifftshift(A_f)
@@ -188,5 +195,5 @@ class OneOverFNoiseConfig:
         noise_arr = np.fft.ifft(A_f).real
         
         return noise_arr
-
+    
 __KB__= 1.38e-23  # Boltzmann constant in J/K
