@@ -244,7 +244,7 @@ class ArbQubitSys:
     def get_H_Z_bias(self, qubit_index: int):
         q_dim = self.q_dim_list[qubit_index]
         a = destroy(q_dim)
-        a_dagger = dag(a)
+        a_dagger = a.dag()
         if self.bias_list is None:
             return a_dagger * a
         # Add interface here...
@@ -389,7 +389,7 @@ class ArbQubitSys:
             qeye_list = self.qeye_list.copy()
             # Define creation/annihilation operator to define the collapse operator
             a = destroy(self.q_dim_list[q_index])
-            a_dagger = dag(a)
+            a_dagger = a.dag()
             gamma_sum = 0
 
             gamma_up = self.gamma_list[q_index].get("up", 0)

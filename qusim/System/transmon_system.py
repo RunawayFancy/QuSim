@@ -52,7 +52,7 @@ class TransmonSys:
         self.g = self.r
         self.g_freq = g_freq
         self.a_list = self.get_a_list()  # Define the second quantization field operator
-        self.a_dagger_list = [dag(a) for a in self.a_list]
+        self.a_dagger_list = [a.dag() for a in self.a_list]
         self.H_q, self.H_a = self.get_Hq_Ha()
         self.H_inter = self.get_H_inter()
         self.H = 2 * np.pi * (self.H_q + self.H_a + self.H_inter)
