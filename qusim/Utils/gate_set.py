@@ -3,7 +3,7 @@ from copy import deepcopy
 import json
 import os
 from collections import defaultdict as ddict
-from typing import Literal, Optional
+from typing import Literal, Optional, List
 from tkinter import Tk, filedialog
 import numpy as np
 from math import ceil
@@ -36,6 +36,32 @@ class SystemInfo:
         system_info_dict["t_moment"] = self.t_moment
 
         return system_info_dict
+
+
+class GateInfo:
+    """
+    Match qiskit QuantumCircuit output.
+    gate: str
+        Gate name. usually be X, Y, Z, H, CZ, CNOT, iSWAP, bSWAP
+    qubit: List[int]
+        Corresponding (physical or logical) qubit index. A following
+        conversion of qubit to qindex is required.
+    params: List[flaot]
+
+    """
+    def __init__(
+            self,
+            gate: str,
+            qubit: List[int],
+            params: List[float]
+        ):
+        self.gate = gate
+        self.qubit = qubit
+        self.params = params
+
+
+    def todict(self):
+        return {"args": {"gate": self.gate, "qubit": self.qubit, "params": self.params}}
 
 
 class GateSet:
@@ -87,13 +113,13 @@ class GateSet:
 
     #     return num_of_moment
 
-
+    
     def gate_param_validity(self, pulse_param_dict):
         # assert pulse_param_dict["t_delay"] + pulse_param_dict["t_width"] + pulse_param_dict["t_plateau"] <= self.system_info.t_moment
         pass
 
 
-    def add(self, gate_label: str, pseq: list[PulseConfig]):
+    def add(self, gate_label: str, gate_info: GateInfo, pseq: list[PulseConfig]):
         """
         gate_label: str
             The gate_label should take the form "GATE_Q1&Q2&Q3". 
@@ -136,11 +162,9 @@ class GateSet:
             t_duration = np.max(t_dwp_lst)
             num_of_moment = ceil(t_duration/self.system_info.t_moment)
 
-            try:
-                self.gate_info[gate_label]["num_of_moment"] = num_of_moment
-            except:
-                self.gate_info[gate_label] = ddict()
-                self.gate_info[gate_label]["num_of_moment"] = num_of_moment
+            self.gate_info[gate_label] = gate_info.todict()
+            self.gate_info[gate_label]["num_of_moment"] = num_of_moment
+            
         pass
 
 
@@ -243,6 +267,8 @@ class GateSet:
     #         f'pid={self.pulse_index},'              \
     #         f'shp={self.pulse_shape.__name__}'
     
+
+
 __STR2PULSESHAPE__ = {
     "cosine": PulseShapeFn.COSINE,
     "cosh": PulseShapeFn.COSH,

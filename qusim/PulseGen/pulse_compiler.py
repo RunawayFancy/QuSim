@@ -1,4 +1,4 @@
-from qusim.Utils.gate_set import SystemInfo, GateSet
+from qusim.Utils.gate_set import SystemInfo, GateSet, GateInfo
 from qusim.PulseGen.pulse_config import PulseConfig, PulseShapeFn
 from typing import Optional 
 import numpy as np
