@@ -6,6 +6,8 @@
 
 1. [About](#about)
 2. [User_Guide](#user_guide)
+3. [Citation](#citation)
+4. [Contribution](#contribution)
 
 ## About <a name="about"></a>
 
@@ -67,11 +69,30 @@ Our simulator includes the following features:
 * Tunable coupler helper
 * Aviod crossing helper
 
-### ToDoList
+### Todo list
 > *Stop lazying*
->>                    ---------Runaway_Fancy
+>>                    ---------Jiheng Duan
 
 * Pulse sequence compiler
 * A better gate set paramter management system
 * Bentchmakring tool box
 * State/process/gate set tomography tool box
+
+
+## Citation <a name="citation"></a>
+
+Thank you for taking the time to try our package out. If you found it useful in your research, please cite us as follows:
+
+```
+@software{jhd2024qusim,
+  author = {Jiheng Duan, Pan Shi, Zhen Chen and Fei Yan},
+  title  = {QuSim: A object-oriented software toolkit for qubits simulation and control},
+  url    = {https://github.com/RunawayFancy/QuSim},
+  version = {1.0.3},
+  year   = {2024},
+}
+```
+
+## Contribution & Contact <a name="contribution"></a>
+
+This package is open-source and welcomes all types of contributions. Whether you want to report a bug, request a feature, or submit a pull request, we encourage you to get involved. We’re also open to deeper collaborations to make the tool as useful as possible for everyone. If you’d like to discuss further, please email jiheng.duan@rochester.edu to schedule a meeting.
