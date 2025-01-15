@@ -33,7 +33,7 @@ def noise_gen(
         noise_segments = segmentize(tlist, noise_config.noise_time_config.tseg, noise_base)
         noise_multiplier = noise_config.trigger(len(noise_segments))
 
-        noise_arr = np.array(np.concatenate([sublist * noise_multiplier[_i] for _i, sublist in enumerate(noise_segments)]))
+        noise_arr = np.array(np.concatenate([sublist * noise_multiplier[_i] for _i, sublist in enumerate(noise_segments)]), dtype='float64')
 
     if noise_config.noise_time_config.tranfofn:
         noise_arr = noise_config.noise_time_config.tranfofn(noise_arr)

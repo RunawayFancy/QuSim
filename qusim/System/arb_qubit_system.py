@@ -250,10 +250,10 @@ class ArbQubitSys:
         # Add interface here...
         empty_list = [0 for i in range(q_dim)]
         H_Z = []
-        H_Z.append(empty_list)
-        for i in range(q_dim - 1):
+        # H_Z.append(empty_list)
+        for i in range(q_dim):
             row = list(np.copy(empty_list))
-            row[i+1] = tool.get_Z_element(self.bias_list[qubit_index], i+1)
+            row[i] = tool.get_Z_element(self.bias_list[qubit_index], i)
             H_Z.append(row)
         H_Z_matrix = Qobj(H_Z)
 
@@ -397,6 +397,7 @@ class ArbQubitSys:
             gamma_z = self.gamma_list[q_index].get("z", 0)
             gamma_x = self.gamma_list[q_index].get("x", 0)
 
+            # The operator need to be correct to the bais operator
             if gamma_up != 0:
                 gamma_sum += np.sqrt(gamma_up) * a_dagger
             if gamma_down != 0:
@@ -451,8 +452,9 @@ class ArbQubitSys:
         for chan_name, noise_config_list in channel_noise:
             Hd_channel_list = self.get_Hd_channel(pulse_buffer_lst)
             assert chan_name in self.qchannel
-            try:
+            if chan_name in Hd_channel_list:
                 chan_idx = Hd_channel_list.index(chan_name)
+
                 waveform = copy.deepcopy(pulse_buffer_lst[2][chan_idx][1])
                 for noise_config in noise_config_list:
                     if noise_config.methods == 'sum':
@@ -461,9 +463,17 @@ class ArbQubitSys:
                         pulse_buffer_lst[2][chan_idx][1] *= np.real(noise_gen(noise_config, waveform))
                     else:
                         raise AttributeError('Missing attributes methods in noise config.')
-            except:
-                opeartor = self.pulse_type_mapping[chan_name[0]](chan_name[1])
-                y = np.zeros_like(sim_opts.tlist)
+            else:
+                opeartor_single = self.pulse_type_mapping[chan_name[0]](chan_name[1])
+                
+                if isinstance(chan_name[1], int): # for XY and Z pulse
+                    qeye_list = self.qeye_list.copy()
+                    qeye_list[chan_name[1]] = opeartor_single
+                    opeartor = cal_tensor(qeye_list)
+                else:
+                    opeartor  =  opeartor_single # for INT pulse
+
+                y = np.zeros_like(sim_opts.tlist, dtype="float64")
                 waveform = copy.deepcopy(y)
                 for noise_config in noise_config_list:
                     if noise_config.methods == 'sum':
@@ -516,12 +526,12 @@ class ArbQubitSys:
     
 
     def system_dynamics_propagator(self, 
-            sim_opts: SimulationOption, 
             pseq: List[PulseConfig], 
+            sim_opts: SimulationOption,
             channel_noise: Optional[List[Tuple[tuple, List[Union[GaussianNoiseConfig, RandomTeleNoiseConfig, JNNoiseConfig, OneOverFNoiseConfig]]]]] = None,
             option: Options = Options(rtol=1e-8), 
             do_parallel = True, 
-            do_progress_bar=True
+            do_progress_bar=None
         ):
         # H_d = []; pulse_buffer_list = [[] for _ in range(3)]
         # H_d.append(self.H)

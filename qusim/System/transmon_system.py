@@ -237,6 +237,7 @@ class TransmonSys:
             for Hd_i in pulse_buffer_list[2]:
                 H_d.append(Hd_i)
             initial_state = copy.deepcopy(state)
+            # print(initial_state)
             # Set up master equation solver
             result, angle = self.master_eq_solver(H_d, sim_opts.tlist, initial_state, option)
             result_list.append(result)

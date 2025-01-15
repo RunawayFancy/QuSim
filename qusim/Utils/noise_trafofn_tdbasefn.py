@@ -6,33 +6,39 @@ import numpy as np
 
 
 PI = np.pi
-Jres = 0.1e-3
-
-def Jexchange(v_barrier: np.ndarray, lever_arm: float = 1, J_res: float = Jres):
-    return J_res*np.exp(2*lever_arm*v_barrier) # unit in GHz
 
 
-def J2Vbarrier(J_exchange: np.ndarray, lever_arm: float = 1, J_res: float = Jres):
-    if np.min(J_exchange/J_res + 1)<=0:
-        print((J_exchange/J_res + 1)<0)
-    return 1/(2*lever_arm) * np.log(J_exchange/J_res + 1)
-        
+class ChrgNoiseExchangeQD:
+    
+    def __init__(self, Jres: float = 0.1e-3*2*PI, lever_arm: float = 1):
+        self.Jres = Jres
+        self.lever_arm = lever_arm
 
-def dJdV(v_barrier: np.ndarray, lever_arm = 1, J_res = Jres):
-    return J_res*2*lever_arm*np.exp(2*lever_arm*v_barrier) # unit in GHz
-
-
-def tdbase_charge_noise(tlist: np.ndarray, waveform: np.ndarray):
-    """
-    Suggested method: 'multiply'
-    """
-    Vbarrier_arr = J2Vbarrier(waveform+Jres)
-    sensitivity_arr = dJdV(Vbarrier_arr)
-    return sensitivity_arr
+    def Jexchange(self, v_barrier: np.ndarray):
+        return self.Jres*np.exp(2*self.lever_arm*v_barrier) # unit in GHz
 
 
-def tranfofn_charge_noise(v_barrier: np.ndarray, lever_arm: float = 1):
-    """
-    Suggested method: 'sum'
-    """
-    return np.exp(2*lever_arm*v_barrier)
+    def J2Vbarrier(self, J_exchange: np.ndarray):
+        if np.min(J_exchange/self.Jres + 1)<=0:
+            print(np.min(J_exchange/self.Jres + 1))
+        return 1/(2*self.lever_arm) * np.log(J_exchange/self.Jres + 1)
+            
+
+    def dJdV(self, v_barrier: np.ndarray):
+        return self.Jres*2*self.lever_arm*np.exp(2*self.lever_arm*v_barrier) # unit in GHz
+
+
+    def tdbase_charge_noise(self, tlist: np.ndarray, waveform: np.ndarray):
+        """
+        Suggested method: 'sum'
+        """
+        Vbarrier_arr = self.J2Vbarrier(waveform+self.Jres)
+        sensitivity_arr = self.dJdV(Vbarrier_arr)
+        return sensitivity_arr
+
+
+    def tranfofn_charge_noise(self, v_barrier: np.ndarray):
+        """
+        Suggested method: 'multiply'
+        """
+        return np.exp(2*self.lever_arm*v_barrier)

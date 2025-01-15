@@ -52,4 +52,4 @@ def fsim_zhen(u11,u12,u21,u22,u33,result_list, state_001, state_100):
     print('phi3:', phi3)
     print('phi4:', phi4)
 
-    return theta, phi, phi1,phi2, phi3, phi4      
+    return theta, phi, phi1, phi2, phi3, phi4      

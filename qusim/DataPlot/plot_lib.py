@@ -114,14 +114,14 @@ def plot_population_evolution(_system, result_list, sim_opts: SimulationOption, 
     fig.show()
     
 
-def plot_zz_sweep(x_list:list, y_list:list, zz_list:list, x_label:str, y_label:str):
-    nrm1 = matplotlib.colors.LogNorm(1e-6, 1e-1)  
+def plot_zz_sweep(x_list:list, y_list:list, zz_list:list, x_label:str, y_label:str, fn:str):
+    nrm1 = matplotlib.colors.LogNorm()  
     fig1, ax1 = plt.subplots()
     p1 = ax1.pcolor(x_list, y_list, zz_list, cmap=matplotlib.cm.viridis_r,norm=nrm1)
-    cb1 = fig1.colorbar(p1, ax=ax1,label='ZZ/GHz', extend='both')
-    ax1.set_xlabel('${}$/GHz'.format(x_label))
-    ax1.set_ylabel('${}$/GHz'.format(y_label))
-
+    cb1 = fig1.colorbar(p1, ax=ax1,label='ZZ', extend='both')
+    ax1.set_xlabel('${}$'.format(x_label))
+    ax1.set_ylabel('${}$'.format(y_label))
+    plt.title(fn)
     plt.show()
 
 

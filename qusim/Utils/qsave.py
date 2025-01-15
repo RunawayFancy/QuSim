@@ -5,6 +5,8 @@
 import os
 import pickle
 from tkinter import Tk, filedialog
+from typing import List, Optional
+
 
 class QSave:
     def __init__(self, path: str):
@@ -136,12 +138,22 @@ class QSave:
         print(f"Selected files: {filenames}")
         return filenames  # Return the list of filenames for further use
     
-    def load(self, *filenames):
+
+    def load(self, filenames: Optional[List[str]] = None):
+        """
+        Returns
+            data: list of loaded data
+            filenames: list of loaded filenames
+        """
         # print(filenames)
         if not filenames:
             filenames = self.sfile
         else:
-            filenames = list(filenames)
+            if isinstance(filenames, list):
+                pass
+            else:
+                filenames = list(filenames)
+                # print('Convert the input to list')
             filenames = [fn if fn.endswith('.pkl') else fn + '.pkl' for fn in filenames]
         data = []
         for fn in filenames:
@@ -155,4 +167,4 @@ class QSave:
             except Exception as e:
                 print(f"An error occurred while loading {full_path}: {e}")
         
-        return data
+        return data, filenames

@@ -1,8 +1,13 @@
 #!usr/bin/env python
 # -*- coding: utf-8 -*-
+#%%
+import sys
+sys.path.append("../..")
 
 from qusim.PulseGen.pulse_config import PulseConfig
 from qusim.PulseGen.simulation_option import SimulationOption
+
+from matplotlib.backends.backend_qtagg import FigureCanvas
 
 import copy
 import numpy as np; from numpy import pi as PI
@@ -62,8 +67,8 @@ class QTWaveformPlotter():
                     _plot.setXLink(self._plot0)
                     _plot.setYLink(self._plot0)
         
-        self.win.show()
-        self.app.exec_()
+        # self.win.show()
+        # self.app.exec_()
 
 
 def __pyqt_plot_test(pulse: PulseConfig, sim_opts: SimulationOption) -> None:
@@ -155,6 +160,8 @@ if __name__ == '__main__':
         pseq[ii].t_delay = ii*2
 
     plotter = QTWaveformPlotter(simopt)
+
+    FigureCanvas(plotter)
     for i, p in enumerate(pseq):
         print(i)
         plotter.draw(p)
