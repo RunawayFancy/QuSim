@@ -85,7 +85,7 @@ Thank you for taking the time to try our package out. If you found it useful in 
 
 ```
 @software{jhd2024qusim,
-  author = {Jiheng Duan, Pan Shi, Zhen Chen and Fei Yan},
+  author = {Jiheng Duan, Pan Shi and Fei Yan},
   title  = {QuSim: A object-oriented software toolkit for qubits simulation and control},
   url    = {https://github.com/RunawayFancy/QuSim},
   version = {1.0.3},
