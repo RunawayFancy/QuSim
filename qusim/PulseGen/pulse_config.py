@@ -26,25 +26,96 @@ import pickle
 def cosine(tlist: np.ndarray, pulse: 'PulseConfig'):
     # If the width of the pulse is small, then return a square pulse.
     if np.abs(pulse.t_width) < 1e-5: return square(tlist, pulse)
-    return pulse.amplitude * edges.cosine_edge(tlist, pulse.t_delay, pulse.t_width, pulse.t_plateau)
+    try:
+        amp = pulse.amplitude[0]
+    except:
+        amp = pulse.amplitude
+
+    return amp * edges.cosine_edge(tlist, pulse.t_delay, pulse.t_width, pulse.t_plateau)
+
 
 def hcosine(tlist: np.ndarray, pulse: 'PulseConfig'): # Half cosine
     if np.abs(pulse.t_width) < 1e-5: return square(tlist, pulse)
     a = 0.3; b = 1
-    return pulse.amplitude * edges.cosine_edge(tlist, pulse.t_delay, pulse.t_width, pulse.t_plateau, a, b)
+    try:
+        amp = pulse.amplitude[0]
+    except:
+        amp = pulse.amplitude
+
+    return amp * edges.cosine_edge(tlist, pulse.t_delay, pulse.t_width, pulse.t_plateau, a, b)
+
 
 def cosh(tlist: np.ndarray, pulse: 'PulseConfig'):
     if np.abs(pulse.t_width) < 1e-5: return square(tlist, pulse)
-    return pulse.amplitude * edges.hcosh_edge(tlist, pulse.t_delay, pulse.t_width, pulse.t_plateau)
+    try:
+        amp = pulse.amplitude[0]
+    except:
+        amp = pulse.amplitude
+
+    return amp * edges.hcosh_edge(tlist, pulse.t_delay, pulse.t_width, pulse.t_plateau)
+
 
 def square(tlist: np.ndarray, pulse: 'PulseConfig'):
-    return pulse.amplitude * ( ((tlist >= pulse.t_delay) & (tlist <= pulse.t_delay + pulse.t_width + pulse.t_plateau) ) + 0j )
+    try:
+        amp = pulse.amplitude[0]
+    except:
+        amp = pulse.amplitude
+
+    return amp * edges.square_edge(tlist, pulse.t_delay, pulse.t_plateau)
+
 
 def tanh(tlist: np.ndarray, pulse: 'PulseConfig'):
-    return pulse.amplitude * edges.tanh_edge(tlist, pulse.t_delay, pulse.t_width, pulse.t_plateau, pulse.epsilon)
+    try:
+        amp = pulse.amplitude[0]
+    except:
+        amp = pulse.amplitude
+
+    return amp * edges.tanh_edge(tlist, pulse.t_delay, pulse.t_width, pulse.t_plateau, pulse.epsilon)
+
 
 def hyper(tlist: np.ndarray, pulse: 'PulseConfig'):
-    return pulse.amplitude * edges.hyper_edge(tlist, pulse.t_delay, pulse.t_width, pulse.t_plateau, pulse.epsilon)
+    try:
+        amp = pulse.amplitude[0]
+    except:
+        amp = pulse.amplitude
+
+    return amp * edges.hyper_edge(tlist, pulse.t_delay, pulse.t_width, pulse.t_plateau, pulse.epsilon)
+
+
+def linear_ramp(tlist: np.ndarray, pulse: 'PulseConfig'):
+    try:
+        amp_init = pulse.amplitude[0]
+        amp_final = pulse.amplitude[1]
+    except:
+        amp_init = 0
+        amp_final = pulse.amplitude
+
+    wf = (amp_final-amp_init) * edges.linear_ramp_edge(tlist, pulse.t_delay, pulse.t_width, pulse.t_plateau, pulse.ramp_cntrl)
+
+    if pulse.ramp_cntrl == 'l':
+        wf += amp_init * edges.square_edge(tlist, pulse.t_delay, pulse.t_plateau + pulse.t_width/2)
+    elif pulse.ramp_cntrl == 'r':
+        wf += amp_init * edges.square_edge(tlist, pulse.t_delay, pulse.t_plateau + pulse.t_width/2)
+
+    return wf
+
+
+def cos_ramp(tlist: np.ndarray, pulse: 'PulseConfig'):
+    try:
+        amp_init = pulse.amplitude[0]
+        amp_final = pulse.amplitude[1]
+    except:
+        amp_init = 0
+        amp_final = pulse.amplitude
+
+    wf = (amp_final-amp_init) * edges.cos_ramp_edge(tlist, pulse.t_delay, pulse.t_width, pulse.t_plateau, pulse.ramp_cntrl)
+
+    if pulse.ramp_cntrl == 'l':
+        wf += amp_init * edges.square_edge(tlist, pulse.t_delay, pulse.t_plateau + pulse.t_width/2)
+    elif pulse.ramp_cntrl == 'r':
+        wf += amp_init * edges.square_edge(tlist, pulse.t_delay, pulse.t_plateau + pulse.t_width/2)
+
+    return wf
 
 # class Cosine(Enum):
 #     FN = cosine
@@ -85,6 +156,8 @@ class PulseShapeFn(Enum):
     COSH = cosh
     TANH = tanh
     HYPER = hyper
+    LINEAR_RAMP = linear_ramp
+    COS_RAMP = cos_ramp
 
     # SQUARE = Square
     # COSINE = Cosine
@@ -120,7 +193,14 @@ class PulseConfig():
         qindex (int | list): _description_
         phase (float, optional): _description_. Defaults to 0.
         frequency (float, optional): _description_. Defaults to 0.
-        amplitude (float, optional): _description_. Defaults to 0.
+        amplitude (float | list | np.ndarray, optional): _description_. Defaults to 0.
+            if amplitude is a list: 
+                if you are not in a ramp mode
+                    it only use the first element as amplitude
+                if you are in a ramp mode
+                    it will use the first element as the initial amplitude
+                    it will use the second element as the final amplitude
+             
         noise (Optional[dict], optional): _description_. Defaults to None.
         epsilon (float, optional): _description_. Defaults to 1.
         frequency_detuning (float, optional): _description_. Defaults to 0.
@@ -139,7 +219,7 @@ class PulseConfig():
 
     phase: float = 0
     frequency: float = 0
-    amplitude: float = 0
+    amplitude: float|list|np.ndarray = 0
     offset: Optional[float] = None
     noise: Optional[list] = None
     epsilon: float = 1
@@ -148,6 +228,8 @@ class PulseConfig():
     DRAG_config_list: Optional[Iterable[DRAGConfig]] = None
 
     predistortion: Optional[list] = None
+
+    ramp_cntrl: Literal['l', 'r'] = 'l'
 
     def __init__(self,
         pulse_index: int,
@@ -161,7 +243,7 @@ class PulseConfig():
 
         phase: float = 0,
         frequency: float = 0,
-        amplitude: float = 0,
+        amplitude: float|list|np.ndarray = [0],
         offset: Optional[float] = None,
         noise: Optional[list[GaussianNoiseConfig|RandomTeleNoiseConfig|JNNoiseConfig|OneOverFNoiseConfig]] = None,
         epsilon: float = 1,
@@ -169,7 +251,9 @@ class PulseConfig():
         
         DRAG_config_list: Optional[Iterable[DRAGConfig]] = None,
 
-        predistortion: Optional[list] = None
+        predistortion: Optional[list] = None,
+
+        ramp_cntrl: Literal['l', 'r'] = 'l'
     ):
         self.qindex = qindex
         
@@ -182,7 +266,7 @@ class PulseConfig():
 
         self.phase = phase
         self.frequency = frequency
-        self.amplitude = amplitude
+        self.amplitude = np.array(amplitude, dtype=float)
         self.offset = offset
         self.noise = noise
         self.epsilon = epsilon
@@ -191,6 +275,8 @@ class PulseConfig():
         self.DRAG_config_list = DRAG_config_list
 
         self.predistortion = predistortion
+
+        self.ramp_cntrl = ramp_cntrl
     
     def __str__(self):
         return \
