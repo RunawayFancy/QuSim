@@ -21,8 +21,19 @@ Look up the PyPI page: [https://pypi.org/project/qusim/](https://pypi.org/projec
 
 ### Install (use pip)
 
+* Release from pypi (**Not newest version, not recommand**)
 ```
 pip install qusim
+```
+
+* Install from github (**The most recent version, not released, recommand**)
+Notice that this method require install [git](https://git-scm.com/downloads).
+
+Use the following code in terminal
+
+```
+pip install git+https://github.com/RunawayFancy/QuSim.git
+
 ```
 
 ### Requirement
