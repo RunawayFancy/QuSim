@@ -80,7 +80,8 @@ def plot_pulse_sequence(pseq: list[PulseConfig], sim_opts: SimulationOption):
     ax2.set_ylim(-vertical_spacing/2, len(channel_dic) * vertical_spacing)
     ax2.set_ylabel("Pulse Amplitude (a.u.)")
     plt.grid()
-    fig.show()
+    plt.show()
+    pass
 
 def plot_population_evolution(_system, result_list, sim_opts: SimulationOption, interested_state, interested_state_label, initial_state_label):
     num_subplots = len(result_list)
@@ -111,7 +112,8 @@ def plot_population_evolution(_system, result_list, sim_opts: SimulationOption, 
     # Adjust layout
     plt.tight_layout()
     # Show the plot
-    fig.show()
+    plt.show()
+    pass
     
 
 def plot_zz_sweep(x_list:list, y_list:list, zz_list:list, x_label:str, y_label:str, fn:str):
@@ -123,9 +125,10 @@ def plot_zz_sweep(x_list:list, y_list:list, zz_list:list, x_label:str, y_label:s
     ax1.set_ylabel('${}$'.format(y_label))
     plt.title(fn)
     plt.show()
+    pass
 
 
-def plot_Elevel_dynamics(w_scan_space, energy_level_list, num_to_plot, xlabel:str, xrange = [], yrange = [], legend=[]):
+def plot_Elevel_dynamics(w_scan_space, energy_level_list, num_to_plot: int|list|np.ndarray, xlabel:str, xrange = [], yrange = [], legend=[]):
     if isinstance(num_to_plot, int):
         plot_list = range(num_to_plot)
     if isinstance(num_to_plot, list):
@@ -147,6 +150,7 @@ def plot_Elevel_dynamics(w_scan_space, energy_level_list, num_to_plot, xlabel:st
     if label_list_trg:
         plt.legend()
     plt.show()
+    pass
 
 def get_label_list(num_to_plot, legend):
     

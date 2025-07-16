@@ -14,6 +14,7 @@ class ChrgNoiseExchangeQD:
         self.Jres = Jres
         self.lever_arm = lever_arm
 
+
     def Jexchange(self, v_barrier: np.ndarray):
         return self.Jres*np.exp(2*self.lever_arm*v_barrier) # unit in GHz
 

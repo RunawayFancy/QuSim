@@ -371,6 +371,9 @@ class ArbQubitSys:
             The number of decimal number that will be rounded in 
             estimating the probability amplitude of each degenerated 
             state.
+
+        It returns
+            eigenstates, eigenenergies.real, max_index    
         '''
         max_index = self.get_state_index(n, freq_threshold, deg_threshold, deg_round)
         eigen_val_state = self.H.eigenstates()
