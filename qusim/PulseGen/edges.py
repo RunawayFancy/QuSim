@@ -177,12 +177,13 @@ def linear_ramp_edge(tlist: np.ndarray,
     w = t_width
     d = t_delay
     p = t_plateau
+    dt = tlist[1]-tlist[0]
 
     if cntrl == 'l':
         Y = linear_edge(tlist, d, w, p)
         Y *= 1 - ( (tlist >= d + w/2 + p) & (tlist <= d + w + p) ) 
     elif cntrl == 'r':
-        d -= w/2
+        d -= w/2 + dt
         Y = linear_edge(tlist, d, w, p)
         Y *= 1 - ( (tlist >= d) & (tlist <= d + w/2) ) 
 

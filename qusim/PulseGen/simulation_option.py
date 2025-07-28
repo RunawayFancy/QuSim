@@ -17,7 +17,7 @@ class SimulationOption():
         self.simulation_point = simu_point
         self.initial_state = init_state
         
-        self.tlist = np.linspace(0, self.simulation_time, self.simulation_point)
+        self.tlist = np.linspace(0, self.simulation_time, self.simulation_point, dtype=np.float64)
         # self.tlist = np.linspace(0, self.simulation_time, self.simulation_point)
 
         if self.simulation_point > 1:
