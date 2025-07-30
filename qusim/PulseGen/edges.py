@@ -183,7 +183,7 @@ def linear_ramp_edge(tlist: np.ndarray,
         Y = linear_edge(tlist, d, w, p)
         Y *= 1 - ( (tlist >= d + w/2 + p) & (tlist <= d + w + p) ) 
     elif cntrl == 'r':
-        d -= w/2 + dt
+        d -= w/2
         Y = linear_edge(tlist, d, w, p)
         Y *= 1 - ( (tlist >= d) & (tlist <= d + w/2) ) 
 
