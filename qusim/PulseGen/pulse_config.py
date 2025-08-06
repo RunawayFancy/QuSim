@@ -96,6 +96,8 @@ def linear_ramp(tlist: np.ndarray, pulse: 'PulseConfig'):
         wf += amp_init * edges.square_edge(tlist, pulse.t_delay, pulse.t_plateau + pulse.t_width/2)
     elif pulse.ramp_cntrl == 'r':
         wf += amp_init * edges.square_edge(tlist, pulse.t_delay, pulse.t_plateau + pulse.t_width/2)
+        
+    wf[-1] = 0 # Ensure the last point is zero, to avoid numerical issues
 
     return wf
 
