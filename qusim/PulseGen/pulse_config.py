@@ -13,6 +13,7 @@ from qusim.PulseGen.noise_config import *
 from collections import namedtuple
 from collections import defaultdict as ddict
 from typing import Literal, Optional, Iterable
+import inspect
 from enum import Enum
 
 from copy import deepcopy
@@ -351,6 +352,10 @@ class PulseConfig():
         
         # Add carrier
         drive_pulse = np.real(drive_pulse * self.carrier(tlist))
+
+        # Add predistortion
+        if self.predistortion:
+            drive_pulse = self.apply_predistortion(drive_pulse, sim_opts)
         
         # Add noise
         if self.noise:
@@ -385,6 +390,70 @@ class PulseConfig():
         offset_pulse = PulseShapeFn.SQUARE(tlist, pulse)
 
         return np.real(offset_pulse)
+
+    def apply_predistortion(self, ylist: np.ndarray, sim_opts: SimulationOption) -> np.ndarray:
+        """
+        Apply predistortion in sequence.
+
+        Supported predistortion items:
+        - Callable: predistort(tlist, ylist[, dt]) -> ylist
+        - Dict IIR filter:
+            {"sos": [...]} OR {"b": [...], "a": [...]}
+            Optional keys: "zi", "gain"
+        """
+
+        # print("Applying predistortion...")
+        tlist = sim_opts.tlist
+        dt = sim_opts.dt
+        y = np.array(ylist, dtype=float)
+
+        for item in self.predistortion:
+            if callable(item):
+                try:
+                    y = item(tlist, y, dt)
+                except TypeError:
+                    y = item(tlist, y)
+                continue
+
+            if isinstance(item, dict):
+                y = self._apply_iir_filter(y, item)
+                continue
+
+            raise TypeError("predistortion item must be callable or dict")
+
+        return y
+
+    def _apply_iir_filter(self, y: np.ndarray, cfg: dict) -> np.ndarray:
+        try:
+            import scipy.signal as signal
+        except Exception as exc:
+            raise ImportError("scipy is required for IIR predistortion") from exc
+
+        if "sos" in cfg:
+            sos = np.array(cfg["sos"], dtype=float)
+            zi = cfg.get("zi")
+            if zi is not None:
+                zi = np.array(zi, dtype=float)
+                y, _ = signal.sosfilt(sos, y, zi=zi)
+            else:
+                y = signal.sosfilt(sos, y)
+        elif "b" in cfg and "a" in cfg:
+            b = np.array(cfg["b"], dtype=float)
+            a = np.array(cfg["a"], dtype=float)
+            zi = cfg.get("zi")
+            if zi is not None:
+                zi = np.array(zi, dtype=float)
+                y, _ = signal.lfilter(b, a, y, zi=zi)
+            else:
+                y = signal.lfilter(b, a, y)
+        else:
+            raise ValueError("IIR predistortion dict requires 'sos' or 'b'+'a'")
+
+        gain = cfg.get("gain", None)
+        if gain is not None:
+            y = y * float(gain)
+
+        return y
         
 
 # used for testing other functions
