@@ -134,7 +134,7 @@ ngate = 1
 do_scan = True
 do_save = False
 
-chrg_noise_trigger = False
+chrg_noise_trigger = True
 hyperfine_noise_trigger = True
 nrep = 1
 
@@ -264,7 +264,12 @@ if do_scan:
                 corr_id="int_charge"
             )
             chan_noise.append([("INT", [1,2]), [chrg_exchange_inter_model]])
-            chan_noise.append([("INT", [2,3]), [chrg_exchange_inter_model]])
+            chan_noise.append(
+                [
+                    ("INT", [2,3]), 
+                    [chrg_exchange_inter_model]
+                ]
+            )
         else:
             chrg_exchange_model = None
 

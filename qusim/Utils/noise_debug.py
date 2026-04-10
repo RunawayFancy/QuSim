@@ -41,8 +41,9 @@ def build_channel_noise_series(
                 applied *= n
             else:
                 raise AttributeError("noise config missing methods or invalid methods")
-
-        results[chan] = {"raw": raw_sum, "applied": applied}
+        # print(chan)
+        # print(results)
+        results[str(chan)] = {"raw": raw_sum, "applied": applied}
 
     return results
 
@@ -72,8 +73,8 @@ def correlation_report(
     corr_mat = np.eye(len(channels))
     for i in range(len(channels)):
         for j in range(i + 1, len(channels)):
-            a = series[channels[i]]["raw"]
-            b = series[channels[j]]["raw"]
+            a = series[str(channels[i])]["raw"]
+            b = series[str(channels[j])]["raw"]
             if np.std(a) == 0 or np.std(b) == 0:
                 c = 0.0
             else:
