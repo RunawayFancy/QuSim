@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(PYTHONPATH=src /e/conda/envs/qusim_qutip5/python.exe -c ' *)",
+      "Bash(PYTHONPATH=src \"/e/conda/envs/qusim_qutip5/python.exe\" -c \"import qutip; print\\('qutip', qutip.__version__\\); import jupyter_core; print\\('jupyter_core', jupyter_core.__version__\\)\")",
+      "Bash(\"/e/conda/envs/qusim_qutip5/python.exe\" -m jupyter nbconvert --version)",
+      "Bash(\"/e/conda/envs/qusim_qutip5/python.exe\" -c \"import nbconvert, nbclient, ipykernel; print\\('nbconvert', nbconvert.__version__\\); print\\('nbclient', nbclient.__version__\\); print\\('ipykernel ok'\\)\")",
+      "Bash(PYTHONPATH=src \"/e/conda/envs/qusim_qutip5/python.exe\" \"C:/Users/JIHENG~1/AppData/Local/Temp/claude/e--PhD-file-BAQIS-Shipan-qutip-2bit-simulation-qusim-qutip5/14753ad7-a0c1-490c-8b8b-f309cd2d6fca/scratchpad/verify_core.py\")",
+      "Read(//e/conda/envs/qusim_qutip5/lib/site-packages/qutip/solver/**)",
+      "Bash(\"/e/conda/envs/qusim_qutip5/python.exe\" - \"Tutorial/transmon_tutorial/System_dynamics.ipynb\")",
+      "Bash(PYTHONPATH=src \"/e/conda/envs/qusim_qutip5/python.exe\" .nbrun_tmp.py \"Tutorial/transmon_tutorial/iswap_like.ipynb\")",
+      "Bash(\"/e/conda/envs/qusim_qutip5/python.exe\" - \"Tutorial/transmon_tutorial/iswap_like.ipynb\")",
+      "Bash(file Tutorial/transmon_tutorial/iswap_like.ipynb)",
+      "Bash(python -c ' *)",
+      "Bash(/e/conda/envs/qusim_qutip5/python.exe -c ' *)",
+      "PowerShell(& \"E:\\\\conda\\\\envs\\\\qusim_qutip5\\\\python.exe\" -m pip install -e . 2>&1)",
+      "Bash(\"/e/conda/envs/qusim_qutip5/python.exe\" -W ignore -)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(echo \"=== exit $? ===\")",
+      "Bash(git rev-list *)",
+      "Bash(git merge *)",
+      "Bash(git fetch *)",
+      "Bash(git reset *)",
+      "Bash(PYTHONPATH=src \"/e/conda/envs/qusim_qutip5/python.exe\" -m compileall -q src/qusim)",
+      "Bash(PYTHONPATH=src /e/conda/envs/qusim_qutip5/python.exe -W ignore -c ' *)",
+      "Bash(\"/e/conda/envs/qusim_qutip5/python.exe\" -)",
+      "Bash(PYTHONPATH=src \"/e/conda/envs/qusim_qutip5/python.exe\" .nbrun_tmp.py \"Tutorial/transmon_tutorial/DRAG.ipynb\")",
+      "Bash(git -c core.quotepath=false status --short)",
+      "Bash(echo \"=== commit exit $? ===\")",
+      "Bash(git push *)"
+    ]
+  }
+}
