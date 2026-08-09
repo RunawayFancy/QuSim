@@ -164,3 +164,8 @@ ST0_qubit/
 Tutorial/transmon_tutorial/archive/
 Tutorial/arb_qubit_tutorial/archive/
 noise_gen_old.py
+plot_tomo.py
+
+# Editor / local tooling config (do not commit)
+.vscode/
+.claude/

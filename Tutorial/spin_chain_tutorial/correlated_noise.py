@@ -9,9 +9,9 @@ import math as m
 sys.path.append('../..')
 
 from qusim import *
-from qusim.Utils.noise_trafofn_tdbasefn import *
+from qusim.utils.noise_trafofn_tdbasefn import *
 from qutip import *
-from qusim.Utils.noise_debug import correlation_report, assert_correlated
+from qusim.utils.noise_debug import correlation_report, assert_correlated
 from tqdm import tqdm
 qsv = QSave('E:\PhD_file\BAQIS\Shipan_qutip_2bit_simulation\qusim_stable_ver\Data\ST0\correlated_noise')
 

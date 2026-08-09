@@ -1,5 +1,5 @@
 from qusim import *
-from qusim.Utils.noise_trafofn_tdbasefn import *
+from qusim.utils.noise_trafofn_tdbasefn import *
 path = 'Data/ST0_coupler/'
 qsv = QSave(path)
 
@@ -18,7 +18,7 @@ import math as m
 from qutip import*
 
 import argparse
-from qusim.PulseGen.noise_gen import clear_corr_noise_cache
+from qusim.pulse_gen.noise_gen import clear_corr_noise_cache
 
 ## Define system
 

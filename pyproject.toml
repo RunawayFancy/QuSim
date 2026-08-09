@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qusim"
+version = "1.1.0"
+description = "A simulator aim at simulating and solving Transmon based qubit-coupler-resonator system"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Jiheng Duan", email = "jiheng.duan@rochester.edu" },
+]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+]
+dependencies = [
+    # Migrated to qutip 5; version floors reflect the qusim_qutip5 environment.
+    "qutip>=5.0",
+    "numpy>=1.26",
+    "scipy>=1.12",
+    "matplotlib>=3.8",
+    "mpmath>=1.3",
+    "pillow>=10.2",
+    "sympy>=1.12",
+    "tqdm>=4.66",
+    "lmfit>=1.2",        # used by qusim.processing.fitting / qusim.utils.floquet
+    "h5py>=3.11",
+    "pyqtgraph>=0.13",
+    "PyQt5>=5.15",
+    "vispy>=0.14",
+]
+
+[project.urls]
+Homepage = "https://github.com/RunawayFancy/QuSim"
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -6,9 +6,9 @@ import copy
 sys.path.append('../..')
 
 from qusim import *
-from qusim.DataPlot.plot_tomo import hinton as hintonpt
-from qusim.Utils.noise_trafofn_tdbasefn import *
-from qusim.Utils.noise_debug import *
+from qusim.data_plot.plot_tomo import hinton as hintonpt
+from qusim.utils.noise_trafofn_tdbasefn import *
+from qusim.utils.noise_debug import *
 
 import numpy as np; PI = np.pi
 import matplotlib.pyplot as plt
