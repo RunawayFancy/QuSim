@@ -88,7 +88,8 @@ class GaussianNoiseConfig:
         mean: float = 0,
         std: float = 0.1,
         amp: float = 1,
-        methods: Literal['sum', 'multiply'] = 'sum'
+        methods: Literal['sum', 'multiply'] = 'sum',
+        corr_id: Optional[str] = None
     ):
         self.noise_time_config = noise_time_config
         self.mean = mean
@@ -96,6 +97,7 @@ class GaussianNoiseConfig:
         self.amp = amp
         self.type = 'ga'
         self.methods = methods
+        self.corr_id = corr_id
     
 
     def trigger(self, seg_length: int) -> np.ndarray:
@@ -114,7 +116,8 @@ class RandomTeleNoiseConfig:
         high_val: float = 1,
         low_val: float = 0,
         switch_prob: float = 0.5,
-        methods: Literal['sum', 'multiply'] = 'sum'
+        methods: Literal['sum', 'multiply'] = 'sum',
+        corr_id: Optional[str] = None
     ):
         self.noise_time_config = noise_time_config
         self.high_val = high_val
@@ -122,6 +125,7 @@ class RandomTeleNoiseConfig:
         self.switch_prob = switch_prob
         self.type = 'rt'
         self.methods = methods
+        self.corr_id = corr_id
 
 
     def trigger(self, seg_length: int) -> np.ndarray:
@@ -138,7 +142,8 @@ class JNNoiseConfig:
         noise_time_config: NoiseTimeConfig,
         temperature: float = 295, # Unit in Kelvin
         resistance: float = 1, # Unit in Ohm
-        methods: Literal['sum', 'multiply'] = 'sum'             
+        methods: Literal['sum', 'multiply'] = 'sum',
+        corr_id: Optional[str] = None
     ):
         self.noise_time_config = noise_time_config
         self.temperature = temperature
@@ -146,6 +151,7 @@ class JNNoiseConfig:
         self.kb = __KB__
         self.type = 'jn'
         self.methods = methods
+        self.corr_id = corr_id
 
 
     def trigger(self, seg_length: int) -> np.ndarray:
@@ -165,6 +171,7 @@ class OneOverFNoiseConfig:
         alpha: float = 0.9, # 1/f^alpha
         scale: float = 1, # scales the ifft noise time series
         methods: Literal['sum', 'multiply'] = 'sum',
+        corr_id: Optional[str] = None,
         # normalized: Literal['no', 'std', 'max'] = 'no', # Normalized the ifft signal with std
         
     ):
@@ -188,6 +195,7 @@ class OneOverFNoiseConfig:
         # self.normalized = normalized
 
         self.type = '1/f'
+        self.corr_id = corr_id
     
 
     def trigger(self, N: int) -> np.ndarray:

@@ -39,11 +39,22 @@ def lowering_t(tlist: np.ndarray,
 
 def square_edge(tlist: np.ndarray,
                 t_delay: float,
-                t_plateau: float):
+                t_plateau: float,
+                include_edge: Literal['left', 'right', 'both', 'none'] = 'both'):
     d = t_delay
     p = t_plateau
 
-    return ( ((tlist >= d) & (tlist <= d + p) ))
+    if include_edge == 'left':
+        Y = ( ((tlist >= d) & (tlist < d + p) )) 
+    elif include_edge == 'right':
+        Y = ( ((tlist > d) & (tlist <= d + p) ))
+    elif include_edge == 'both':
+        Y = ( ((tlist >= d) & (tlist <= d + p) ))
+    elif include_edge == 'none':
+        Y = ( ((tlist > d) & (tlist < d + p) ))
+
+    return Y
+
 
 
 # Revise
@@ -177,6 +188,7 @@ def linear_ramp_edge(tlist: np.ndarray,
     w = t_width
     d = t_delay
     p = t_plateau
+    dt = tlist[1]-tlist[0]
 
     if cntrl == 'l':
         Y = linear_edge(tlist, d, w, p)
