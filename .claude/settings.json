@@ -28,7 +28,10 @@
       "Bash(PYTHONPATH=src \"/e/conda/envs/qusim_qutip5/python.exe\" .nbrun_tmp.py \"Tutorial/transmon_tutorial/DRAG.ipynb\")",
       "Bash(git -c core.quotepath=false status --short)",
       "Bash(echo \"=== commit exit $? ===\")",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(grep -vE '^\\\\s*$')",
+      "Bash(git checkout *)",
+      "Bash(git pull *)"
     ]
   }
 }
